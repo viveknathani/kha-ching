@@ -20,7 +20,6 @@
  */
 
 import { BrokerName } from 'inves-broker'
-import { KiteOrder } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
 import getInvesBrokerInstance from '../invesBroker'
@@ -179,24 +178,25 @@ const slmWatcher = async ({
         ? ORDER_TYPE.SL_M
         : ORDER_TYPE.MARKET
 
-    const exitOrder: KiteOrder = {
-      tradingsymbol,
+    const exitOrder = {
+      tradingSymbol: tradingsymbol,
       exchange,
       product,
       quantity: cancelledQty,
-      transaction_type: transactionType,
-      order_type: newOrderType,
-      tag: _queueJobData.initialJobData.orderTag!
+      transactionType: transactionType,
+      orderType: newOrderType,
+      tag: _queueJobData.initialJobData.orderTag!,
+      triggerPrice: 0
     }
 
     if (newOrderType === ORDER_TYPE.SL_M) {
-      exitOrder.trigger_price = triggerPrice
+      exitOrder.triggerPrice = triggerPrice
     }
 
     console.log('[slmWatcher] placing exit order', exitOrder)
     try {
       const { response } = await remoteOrderSuccessEnsurer({
-        ensureOrderState: exitOrder.trigger_price
+        ensureOrderState: exitOrder.triggerPrice
           ? 'TRIGGER PENDING'
           : ORDER_STATUS.CANCELLED,
         orderProps: exitOrder,

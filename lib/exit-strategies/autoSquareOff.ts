@@ -1,5 +1,9 @@
-import { Broker, BrokerName } from 'inves-broker'
-import { KiteOrder } from '../../types/kite'
+import {
+  Broker,
+  BrokerName,
+  OrderInformation,
+  PositionInformation
+} from 'inves-broker'
 import {
   ATM_STRADDLE_TRADE,
   ATM_STRANGLE_TRADE,
@@ -22,17 +26,17 @@ import {
 } from '../utils'
 
 export async function doDeletePendingOrders (
-  orders: KiteOrder[],
+  orders: OrderInformation[],
   broker: Broker,
   initialJobData: Partial<SUPPORTED_TRADE_CONFIG>
 ) {
   const { user } = initialJobData
-  const allOrders: KiteOrder[] = await withRemoteRetry(() =>
+  const allOrders: OrderInformation[] = await withRemoteRetry(() =>
     broker.getOrders({
       kiteAccessToken: user?.session.accessToken
     })
   )
-  const openOrders: KiteOrder[] = allOrders.filter(
+  const openOrders: OrderInformation[] = allOrders.filter(
     order => order.status === 'TRIGGER PENDING'
   )
 
@@ -42,7 +46,7 @@ export async function doDeletePendingOrders (
         openOrder =>
           openOrder.product === order.product &&
           openOrder.exchange === order.exchange &&
-          openOrder.tradingsymbol === order.tradingsymbol &&
+          openOrder.tradingSymbol === order.tradingSymbol &&
           // reverse trade on same exchange + tradingsybol is not possible,
           // so doing `abs`
           Math.abs(openOrder.quantity) === Math.abs(order.quantity)
@@ -52,19 +56,19 @@ export async function doDeletePendingOrders (
 
   // some positions might have squared off during the day when the SL hit
   return Promise.all(
-    openOrdersForPositions.map(async (openOrder: KiteOrder) =>
+    openOrdersForPositions.map(async (openOrder: OrderInformation) =>
       withRemoteRetry(() =>
         broker.cancelOrder(
           {
-            orderId: openOrder.order_id as string,
+            orderId: openOrder.orderId as string,
             variety: openOrder.variety,
-            orderType: openOrder.order_type,
+            orderType: openOrder.orderType,
             product: openOrder.product,
             exchange: openOrder.exchange,
             exchangeToken: 0,
             quantity: openOrder.quantity,
-            tradingSymbol: openOrder.tradingsymbol,
-            transactionType: openOrder.transaction_type,
+            tradingSymbol: openOrder.tradingSymbol,
+            transactionType: openOrder.transactionType,
             validity: openOrder.validity as string
           },
           user?.session.accessToken as string
@@ -75,23 +79,23 @@ export async function doDeletePendingOrders (
 }
 
 export async function doSquareOffPositions (
-  orders: KiteOrder[],
+  orders: OrderInformation[],
   broker: Broker,
   initialJobData: Partial<SUPPORTED_TRADE_CONFIG>
 ) {
   const { user } = initialJobData
-  const openPositions = await withRemoteRetry(() =>
+  const openPositions: PositionInformation = await withRemoteRetry(() =>
     broker.getPositions({
       kiteAccessToken: user?.session.accessToken
     })
   )
-  const { net } = openPositions
+  const { net } = openPositions as any
   const openPositionsForOrders = orders
     .filter(o => o)
     .map(order => {
       const position = net.find(
         openPosition =>
-          openPosition.tradingsymbol === order.tradingsymbol &&
+          openPosition.tradingsymbol === order.tradingSymbol &&
           openPosition.exchange === order.exchange &&
           openPosition.product === order.product &&
           (openPosition.quantity < 0
@@ -159,7 +163,7 @@ async function autoSquareOffStrat ({
   deletePendingOrders,
   initialJobData
 }: {
-  rawKiteOrdersResponse: KiteOrder[]
+  rawKiteOrdersResponse: OrderInformation[]
   deletePendingOrders: boolean
   initialJobData: SUPPORTED_TRADE_CONFIG
 }): Promise<any> {

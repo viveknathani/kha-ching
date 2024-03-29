@@ -19,7 +19,6 @@ import {
 // export const memoizer = require('redis-memoizer')(redisClient);
 import { COMPLETED_ORDER_RESPONSE } from './strategies/mockData/orderResponse'
 import { SignalXUser } from '../types/misc'
-import { KiteOrder } from '../types/kite'
 
 Promise.config({ cancellation: true, warnings: true })
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -29,7 +28,7 @@ import https from 'https'
 import fs from 'fs'
 import memoizer from 'memoizee'
 import getInvesBrokerInstance from './invesBroker'
-import { Broker, BrokerName } from 'inves-broker'
+import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 
 const MOCK_ORDERS = process.env.MOCK_ORDERS
   ? JSON.parse(process.env.MOCK_ORDERS)
@@ -1091,7 +1090,7 @@ export const orderStateChecker = (kite, orderId, ensureOrderState) => {
 export const remoteOrderSuccessEnsurer = async (args: {
   _kite?: Record<string, unknown>
   ensureOrderState: string
-  orderProps: Partial<KiteOrder>
+  orderProps: Partial<OrderInformation>
   instrument: INSTRUMENTS
   onFailureRetryAfterMs?: number
   retryAttempts?: number
@@ -1101,7 +1100,7 @@ export const remoteOrderSuccessEnsurer = async (args: {
   attemptCount?: number
 }): Promise<{
   successful: boolean
-  response?: KiteOrder[]
+  response?: OrderInformation[]
 }> => {
   const {
     _kite,
@@ -1256,10 +1255,10 @@ export const remoteOrderSuccessEnsurer = async (args: {
         const matchedOrder = orders.find(
           order =>
             order.tag === orderProps.tag &&
-            order.tradingsymbol === orderProps.tradingsymbol &&
+            order.tradingsymbol === orderProps.tradingSymbol &&
             order.quantity === orderProps.quantity &&
             order.product === orderProps.product &&
-            order.transaction_type === orderProps.transaction_type &&
+            order.transaction_type === orderProps.transactionType &&
             order.exchange === orderProps.exchange
         )
 
@@ -1338,7 +1337,7 @@ export const attemptBrokerOrders = async (
   ordersPr: Array<Promise<any>>
 ): Promise<{
   allOk: boolean
-  statefulOrders: KiteOrder[]
+  statefulOrders: OrderInformation[]
 }> => {
   try {
     const brokerOrderResolutions = await allSettled(ordersPr)
@@ -1348,7 +1347,7 @@ export const attemptBrokerOrders = async (
       (res: allSettledInterface) => res.status === 'rejected'
     )
     const successfulOrders: Array<
-      KiteOrder | null
+      OrderInformation | null
     > = (brokerOrderResolutions as any)
       .map((res: allSettledInterface) =>
         res.status === 'fulfilled' && res.value.successful
@@ -1364,13 +1363,13 @@ export const attemptBrokerOrders = async (
     if (rejectedLegs.length > 0) {
       return {
         allOk: false,
-        statefulOrders: successfulOrders as KiteOrder[]
+        statefulOrders: successfulOrders as OrderInformation[]
       }
     }
 
     return {
       allOk: true,
-      statefulOrders: successfulOrders as KiteOrder[]
+      statefulOrders: successfulOrders as OrderInformation[]
     }
   } catch (e) {
     console.log('🔴 [attemptBrokerOrders] error', e)

@@ -2,7 +2,6 @@ import { Promise } from 'bluebird'
 import axios from 'axios'
 import dayjs from 'dayjs'
 import { omit } from 'lodash'
-import { KiteOrder } from '../../types/kite'
 import { DIRECTIONAL_OPTION_SELLING_TRADE } from '../../types/trade'
 
 import {
@@ -42,7 +41,7 @@ import {
   logDeep
 } from '../utils'
 import getInvesBrokerInstance from '../invesBroker'
-import { BrokerName } from 'inves-broker'
+import { BrokerName, OrderInformation } from 'inves-broker'
 
 const SIGNALX_URL = process.env.SIGNALX_URL ?? 'https://indicator.signalx.trade'
 
@@ -88,7 +87,7 @@ async function fetchSuperTrend ({
 export default async function directionalOptionSelling (
   initialJobData: DIRECTIONAL_OPTION_SELLING_TRADE & {
     lastTrend: string
-    lastTradeOrders: KiteOrder[]
+    lastTradeOrders: OrderInformation[]
   }
 ) {
   try {
@@ -308,7 +307,7 @@ async function punchOrders (
   }
 
   let hedgeOrder
-  let hedgeOrdersResponse: KiteOrder[] = []
+  let hedgeOrdersResponse: OrderInformation[] = []
   if (isHedgeEnabled && Number(hedgeDistance) > 0) {
     const hedgeStrike =
       Number(optionStrike) +
@@ -380,7 +379,7 @@ async function punchOrders (
     tag: orderTag
   }
 
-  let rawKiteOrdersResponse: KiteOrder[] = []
+  let rawKiteOrdersResponse: OrderInformation[] = []
   try {
     const brokerOrderPr = remoteOrderSuccessEnsurer({
       _kite: kite as any,

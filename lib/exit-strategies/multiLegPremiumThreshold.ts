@@ -28,7 +28,6 @@
 
 import dayjs from 'dayjs'
 import { Await } from '../../types'
-import { KiteOrder } from '../../types/kite'
 import { COMBINED_SL_EXIT_STRATEGY } from '../../types/plans'
 import { ATM_STRADDLE_TRADE, ATM_STRANGLE_TRADE } from '../../types/trade'
 import { EXCHANGE, EXIT_STRATEGIES, USER_OVERRIDE } from '../constants'
@@ -46,7 +45,7 @@ import {
 
 import { doSquareOffPositions } from './autoSquareOff'
 import getInvesBrokerInstance from '../invesBroker'
-import { BrokerName } from 'inves-broker'
+import { BrokerName, OrderInformation } from 'inves-broker'
 
 const patchTradeWithTrailingSL = async ({ dbId, trailingSl }) =>
   await patchDbTrade({
@@ -81,8 +80,8 @@ async function multiLegPremiumThreshold ({
   squareOffOrders
 }: {
   initialJobData: CombinedPremiumJobDataInterface
-  rawKiteOrdersResponse: KiteOrder[]
-  squareOffOrders?: KiteOrder[]
+  rawKiteOrdersResponse: OrderInformation[]
+  squareOffOrders?: OrderInformation[]
 }): Promise<any> {
   try {
     if (getTimeLeftInMarketClosingMs() < 0) {
@@ -121,9 +120,9 @@ async function multiLegPremiumThreshold ({
     // and quantities should be greater than equal to `legsOrders`
     // if not, resolve this checker assuming the user has squared off the positions themselves
 
-    const tradingSymbols = legsOrders.map(order => order.tradingsymbol)
+    const tradingSymbols = legsOrders.map(order => order.tradingSymbol)
 
-    const averageOrderPrices = legsOrders.map(order => order.average_price)
+    const averageOrderPrices = legsOrders.map(order => order.averagePrice)
     const initialPremiumReceived = averageOrderPrices.reduce(
       (sum, price) => sum! + price!,
       0
@@ -251,7 +250,7 @@ async function multiLegPremiumThreshold ({
       const avgSymbolPrice = legsOrders.reduce(
         (accum, order) => ({
           ...accum,
-          [order.tradingsymbol]: order.average_price
+          [order.tradingSymbol]: order.averagePrice
         }),
         {}
       )
@@ -290,19 +289,19 @@ async function multiLegPremiumThreshold ({
 
       const squareOffLosingLegs = losingLegs.map(losingLeg =>
         legsOrders.find(
-          legOrder => legOrder.tradingsymbol === losingLeg.tradingSymbol
+          legOrder => legOrder.tradingSymbol === losingLeg.tradingSymbol
         )
       )
       // console.log('squareOffLosingLegs', logDeep(squareOffLosingLegs))
       const bringToCostOrders = winningLegs.map(winningLeg =>
         legsOrders.find(
-          legOrder => legOrder.tradingsymbol === winningLeg.tradingSymbol
+          legOrder => legOrder.tradingSymbol === winningLeg.tradingSymbol
         )
       )
       // console.log('bringToCostOrders', logDeep(bringToCostOrders))
       // 1. square off losing legs
       await doSquareOffPositions(
-        squareOffLosingLegs as KiteOrder[],
+        squareOffLosingLegs as OrderInformation[],
         kite,
         initialJobData
       )

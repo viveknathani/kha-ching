@@ -28,7 +28,6 @@ import {
 import { createOrder, getATMStraddle as getATMStrikes } from './atmStraddle'
 import { doSquareOffPositions } from '../exit-strategies/autoSquareOff'
 import dayjs, { Dayjs } from 'dayjs'
-import { KiteOrder } from '../../types/kite'
 import axios from 'axios'
 import getInvesBrokerInstance from '../invesBroker'
 import { BrokerName } from 'inves-broker'
@@ -205,9 +204,9 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
 
     const kite = await getInvesBrokerInstance(BrokerName.KITE)
 
-    let allOrdersLocal: KiteOrder[] = []
-    let hedgeOrdersLocal: KiteOrder[] = []
-    let allOrders: KiteOrder[] = []
+    let allOrdersLocal: any[] = []
+    let hedgeOrdersLocal: any[] = []
+    let allOrders: any[] = []
 
     if (volatilityType === VOLATILITY_TYPE.SHORT && isHedgeEnabled) {
       const hedges = [

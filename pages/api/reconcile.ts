@@ -8,7 +8,6 @@ import {
   syncGetKiteInstance,
   withoutFwdSlash
 } from '../../lib/utils'
-import { KiteOrder } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
 import getInvesBrokerInstance from '../../lib/invesBroker'

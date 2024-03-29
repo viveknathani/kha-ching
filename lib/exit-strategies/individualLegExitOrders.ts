@@ -1,5 +1,4 @@
-import { Broker, BrokerName } from 'inves-broker'
-import { KiteOrder } from '../../types/kite'
+import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 import { SL_ORDER_TYPE } from '../../types/plans'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
 import getInvesBrokerInstance from '../invesBroker'
@@ -17,27 +16,27 @@ import { doDeletePendingOrders, doSquareOffPositions } from './autoSquareOff'
 import { ORDER_TYPE, TRANSACTION_TYPE } from '../constants'
 
 export const convertSlmToSll = (
-  slmOrder: KiteOrder,
+  slmOrder: OrderInformation,
   slLimitPricePercent: number,
   kite: Broker
-): KiteOrder => {
+): OrderInformation => {
   const sllOrder = { ...slmOrder }
   const absoluteLimitPriceDelta =
-    ((slLimitPricePercent ?? 0) / 100) * sllOrder.trigger_price!
+    ((slLimitPricePercent ?? 0) / 100) * sllOrder.triggerPrice!
   let absoluteLimitPrice
-  if (sllOrder.transaction_type === TRANSACTION_TYPE.SELL) {
-    absoluteLimitPrice = sllOrder.trigger_price! - absoluteLimitPriceDelta
+  if (sllOrder.transactionType === TRANSACTION_TYPE.SELL) {
+    absoluteLimitPrice = sllOrder.triggerPrice! - absoluteLimitPriceDelta
   } else {
-    absoluteLimitPrice = sllOrder.trigger_price! + absoluteLimitPriceDelta
+    absoluteLimitPrice = sllOrder.triggerPrice! + absoluteLimitPriceDelta
   }
 
-  sllOrder.order_type = ORDER_TYPE.SL
+  sllOrder.orderType = ORDER_TYPE.SL
   sllOrder.price = round(absoluteLimitPrice)
 
-  if (sllOrder.price === sllOrder.trigger_price) {
+  if (sllOrder.price === sllOrder.triggerPrice) {
     // keep a min delta of 0.1 from trigger_price
     sllOrder.price =
-      sllOrder.transaction_type === TRANSACTION_TYPE.BUY
+      sllOrder.transactionType === TRANSACTION_TYPE.BUY
         ? sllOrder.price + 0.1
         : sllOrder.price - 0.1
   }
@@ -52,8 +51,8 @@ async function individualLegExitOrders ({
 }: {
   _kite?: any
   initialJobData: SUPPORTED_TRADE_CONFIG
-  rawKiteOrdersResponse: KiteOrder[]
-}): Promise<KiteOrder[] | null> {
+  rawKiteOrdersResponse: OrderInformation[]
+}): Promise<OrderInformation[] | null> {
   const completedOrders = rawKiteOrdersResponse
   if (!(Array.isArray(completedOrders) && completedOrders.length)) {
     return null
@@ -73,12 +72,12 @@ async function individualLegExitOrders ({
 
   const exitOrders = completedOrders.map(order => {
     const {
-      tradingsymbol,
+      tradingSymbol,
       exchange,
-      transaction_type: transactionType,
+      transactionType,
       product,
       quantity,
-      average_price: avgOrderPrice
+      averagePrice: avgOrderPrice
     } = order
     let exitOrderTransactionType
     let exitOrderTriggerPrice
@@ -95,14 +94,15 @@ async function individualLegExitOrders ({
       exitOrderTriggerPrice = avgOrderPrice! - absoluteSl
     }
 
-    let exitOrder: KiteOrder = {
-      transaction_type: exitOrderTransactionType,
-      trigger_price: exitOrderTriggerPrice,
-      order_type: kite.ORDER_TYPE_SLM,
+    let exitOrder: OrderInformation = {
+      ...order,
+      transactionType: exitOrderTransactionType,
+      triggerPrice: exitOrderTriggerPrice,
+      orderType: kite.ORDER_TYPE_SLM,
       quantity: Math.abs(quantity),
       tag: orderTag!,
       product,
-      tradingsymbol,
+      tradingSymbol,
       exchange
     }
 
@@ -110,7 +110,7 @@ async function individualLegExitOrders ({
       exitOrder = convertSlmToSll(exitOrder, slLimitPricePercent!, kite)
     }
 
-    exitOrder.trigger_price = round(exitOrder.trigger_price!)
+    exitOrder.triggerPrice = round(exitOrder.triggerPrice!)
     console.log('placing exit orders...', exitOrder)
     return exitOrder
   })

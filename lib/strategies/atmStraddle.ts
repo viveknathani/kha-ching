@@ -1,5 +1,4 @@
 import dayjs, { ConfigType } from 'dayjs'
-import { KiteOrder } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
 import { ATM_STRADDLE_TRADE } from '../../types/trade'
 
@@ -35,7 +34,7 @@ import {
 } from '../utils'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import getInvesBrokerInstance from '../invesBroker'
-import { Broker, BrokerName } from 'inves-broker'
+import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 
 dayjs.extend(isSameOrBefore)
 
@@ -191,13 +190,13 @@ export const createOrder = ({
   orderTag: string
   transactionType?: string
   productType: PRODUCT_TYPE
-}): KiteOrder => {
+}) => {
   return {
-    tradingsymbol: symbol,
+    tradingSymbol: symbol,
     quantity: lotSize * lots,
     exchange: EXCHANGE.NFO,
-    transaction_type: (transactionType ?? TRANSACTION_TYPE.SELL) as any,
-    order_type: ORDER_TYPE.MARKET,
+    transactionType: (transactionType ?? TRANSACTION_TYPE.SELL) as any,
+    orderType: ORDER_TYPE.MARKET,
     product: productType,
     validity: VALIDITY.DAY,
     tag: orderTag
@@ -225,8 +224,8 @@ async function atmStraddle ({
   | {
       _nextTradingQueue: string
       straddle: Record<string, unknown>
-      rawKiteOrdersResponse: KiteOrder[]
-      squareOffOrders: KiteOrder[]
+      rawKiteOrdersResponse: OrderInformation[]
+      squareOffOrders: OrderInformation[]
     }
   | undefined
 > {
@@ -261,9 +260,9 @@ async function atmStraddle ({
 
     const { PE_STRING, CE_STRING, atmStrike } = straddle
 
-    let allOrdersLocal: KiteOrder[] = []
-    let hedgeOrdersLocal: KiteOrder[] = []
-    let allOrders: KiteOrder[] = []
+    let allOrdersLocal: any[] = []
+    let hedgeOrdersLocal: any[] = []
+    let allOrders: OrderInformation[] = []
 
     if (volatilityType === VOLATILITY_TYPE.SHORT && isHedgeEnabled) {
       const [putHedge, callHedge] = await Promise.all(
@@ -291,7 +290,7 @@ async function atmStraddle ({
       allOrdersLocal = [...hedgeOrdersLocal]
     }
 
-    const orders: KiteOrder[] = [PE_STRING, CE_STRING].map(symbol =>
+    const orders = [PE_STRING, CE_STRING].map(symbol =>
       createOrder({
         symbol,
         lots,

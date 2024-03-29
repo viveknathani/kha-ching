@@ -1,6 +1,5 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
-import { KiteOrder } from '../../types/kite'
 import { SL_ORDER_TYPE } from '../../types/plans'
 import { DIRECTIONAL_OPTION_SELLING_TRADE } from '../../types/trade'
 
@@ -19,16 +18,16 @@ import {
 import { doSquareOffPositions } from './autoSquareOff'
 import { convertSlmToSll } from './individualLegExitOrders'
 import getInvesBrokerInstance from '../invesBroker'
-import { BrokerName } from 'inves-broker'
+import { BrokerName, OrderInformation } from 'inves-broker'
 import { ORDER_TYPE, TRANSACTION_TYPE } from '../constants'
 
 const SIGNALX_URL = process.env.SIGNALX_URL ?? 'https://indicator.signalx.trade'
 
 export interface DOS_TRAILING_INTERFACE {
   initialJobData: DIRECTIONAL_OPTION_SELLING_TRADE
-  rawKiteOrdersResponse: KiteOrder[]
+  rawKiteOrdersResponse: OrderInformation[]
   optionInstrumentToken: string
-  hedgeOrderResponse: KiteOrder
+  hedgeOrderResponse: OrderInformation
 }
 
 async function minXPercentOrSupertrend ({
@@ -43,10 +42,10 @@ async function minXPercentOrSupertrend ({
     const kite = await getInvesBrokerInstance(BrokerName.KITE)
     const [rawKiteOrderResponse] = rawKiteOrdersResponse
     // NB: rawKiteOrderResponse here is of pending SLM Order
-    const orderHistory: KiteOrder[] = await withRemoteRetry(() =>
+    const orderHistory: OrderInformation[] = await withRemoteRetry(() =>
       kite.getOrderHistory({
         kiteAccessToken: user?.session.accessToken,
-        orderId: rawKiteOrderResponse.order_id as string
+        orderId: rawKiteOrderResponse.orderId as string
       })
     )
     const byRecencyOrderHistory = orderHistory.reverse()
@@ -79,7 +78,8 @@ async function minXPercentOrSupertrend ({
     const triggerPendingOrder = byRecencyOrderHistory.find(
       odr => odr.status === 'TRIGGER PENDING'
     )
-    const punchedTriggerPrice = (triggerPendingOrder as KiteOrder).trigger_price
+    const punchedTriggerPrice = (triggerPendingOrder as OrderInformation)
+      .triggerPrice
 
     // 1. whenever this gets called - check supertrend value and the current punched in SL value
     // update pending order if supertrend value is lower
@@ -136,9 +136,10 @@ async function minXPercentOrSupertrend ({
         slOrderType === SL_ORDER_TYPE.SLL
           ? convertSlmToSll(
               {
-                transaction_type: TRANSACTION_TYPE.BUY,
-                trigger_price: newSL
-              } as KiteOrder,
+                ...triggerPendingOrder!,
+                transactionType: TRANSACTION_TYPE.BUY,
+                triggerPrice: newSL
+              },
               slLimitPricePercent!,
               kite
             )
@@ -147,9 +148,9 @@ async function minXPercentOrSupertrend ({
         {
           exchange: triggerPendingOrder?.exchange as string,
           exchangeToken: '',
-          orderId: triggerPendingOrder?.order_id as string,
-          tradingSymbol: triggerPendingOrder?.tradingsymbol as string,
-          userId: triggerPendingOrder?.placed_by as string
+          orderId: triggerPendingOrder?.orderId as string,
+          tradingSymbol: triggerPendingOrder?.tradingSymbol as string,
+          userId: triggerPendingOrder?.placedBy as string
         },
         user?.session.accessToken as string
       )
@@ -168,13 +169,14 @@ async function minXPercentOrSupertrend ({
       ) {
         // place a new SL order
         try {
-          let exitOrder: KiteOrder = {
-            trigger_price: newSL,
-            tradingsymbol: triggerPendingOrder!.tradingsymbol,
+          let exitOrder: OrderInformation = {
+            ...triggerPendingOrder!,
+            triggerPrice: newSL,
+            tradingSymbol: triggerPendingOrder!.tradingSymbol,
             quantity: triggerPendingOrder!.quantity,
             exchange: triggerPendingOrder!.exchange,
-            transaction_type: TRANSACTION_TYPE.BUY,
-            order_type: ORDER_TYPE.SL_M,
+            transactionType: TRANSACTION_TYPE.BUY,
+            orderType: ORDER_TYPE.SL_M,
             product: triggerPendingOrder!.product,
             tag: orderTag!
           }
@@ -205,15 +207,15 @@ async function minXPercentOrSupertrend ({
           await withRemoteRetry(() =>
             kite.cancelOrder(
               {
-                orderId: triggerPendingOrder!.order_id as string,
+                orderId: triggerPendingOrder!.orderId as string,
                 variety: triggerPendingOrder!.variety,
-                orderType: triggerPendingOrder!.order_type,
+                orderType: triggerPendingOrder!.orderType,
                 product: triggerPendingOrder!.product,
                 exchange: triggerPendingOrder!.exchange,
                 exchangeToken: 0,
                 quantity: triggerPendingOrder!.quantity,
-                tradingSymbol: triggerPendingOrder!.tradingsymbol,
-                transactionType: triggerPendingOrder!.transaction_type,
+                tradingSymbol: triggerPendingOrder!.tradingSymbol,
+                transactionType: triggerPendingOrder!.transactionType,
                 validity: triggerPendingOrder!.validity as string
               },
               user?.session.accessToken as string
