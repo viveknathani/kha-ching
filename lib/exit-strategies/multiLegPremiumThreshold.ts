@@ -31,7 +31,7 @@ import { Await } from '../../types'
 import { KiteOrder } from '../../types/kite'
 import { COMBINED_SL_EXIT_STRATEGY } from '../../types/plans'
 import { ATM_STRADDLE_TRADE, ATM_STRANGLE_TRADE } from '../../types/trade'
-import { EXIT_STRATEGIES, USER_OVERRIDE } from '../constants'
+import { EXCHANGE, EXIT_STRATEGIES, USER_OVERRIDE } from '../constants'
 import console from '../logging'
 import { addToNextQueue, EXIT_TRADING_Q_NAME } from '../queue'
 import {
@@ -45,6 +45,8 @@ import {
 } from '../utils'
 
 import { doSquareOffPositions } from './autoSquareOff'
+import getInvesBrokerInstance from '../invesBroker'
+import { BrokerName } from 'inves-broker'
 
 const patchTradeWithTrailingSL = async ({ dbId, trailingSl }) =>
   await patchDbTrade({
@@ -98,7 +100,7 @@ async function multiLegPremiumThreshold ({
       combinedExitStrategy = COMBINED_SL_EXIT_STRATEGY.EXIT_ALL,
       _id: dbId
     } = initialJobData
-    const kite = syncGetKiteInstance(user)
+    const kite = await getInvesBrokerInstance(BrokerName.KITE)
 
     try {
       // notify db that the worker is active and check current user override settings
@@ -131,7 +133,7 @@ async function multiLegPremiumThreshold ({
     try {
       liveSymbolPrices = await getMultipleInstrumentPrices(
         tradingSymbols.map(symbol => ({
-          exchange: kite.EXCHANGE_NFO,
+          exchange: EXCHANGE.NFO,
           tradingSymbol: symbol
         })),
         user!

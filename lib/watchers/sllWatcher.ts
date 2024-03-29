@@ -18,6 +18,9 @@ import {
   syncGetKiteInstance,
   withRemoteRetry
 } from '../utils'
+import getInvesBrokerInstance from '../invesBroker'
+import { BrokerName } from 'inves-broker'
+import { ORDER_STATUS } from '../constants'
 
 const sllWatcher = async ({
   sllOrderId,
@@ -27,19 +30,24 @@ const sllWatcher = async ({
   user: SignalXUser
 }) => {
   try {
-    const kite = syncGetKiteInstance(user)
+    const kite = await getInvesBrokerInstance(BrokerName.KITE)
     const orderHistory = (
-      await withRemoteRetry(() => kite.getOrderHistory(sllOrderId))
+      await withRemoteRetry(() =>
+        kite.getOrderHistory({
+          orderId: sllOrderId,
+          kiteAccessToken: user?.session?.accessToken
+        })
+      )
     ).reverse()
     const isOrderCompleted = orderHistory.find(
-      order => order.status === kite.STATUS_COMPLETE
+      order => order.status === ORDER_STATUS.COMPLETE
     )
     if (isOrderCompleted) {
       return Promise.resolve('[sllWatcher] order Completed!')
     }
 
     const cancelledOrder = orderHistory.find(order =>
-      order.status.includes(kite.STATUS_CANCELLED)
+      order.status.includes(ORDER_STATUS.CANCELLED)
     )
 
     if (cancelledOrder) {
@@ -56,7 +64,7 @@ const sllWatcher = async ({
     const orderCompletionCheckerPr = orderStateChecker(
       kite,
       sllOrderId,
-      kite.STATUS_COMPLETE
+      ORDER_STATUS.COMPLETE
     )
     try {
       await finiteStateChecker(orderCompletionCheckerPr, timeout)
@@ -72,9 +80,16 @@ const sllWatcher = async ({
         )
         try {
           await withRemoteRetry(() =>
-            kite.modifyOrder(openOrder.variety, sllOrderId, {
-              order_type: kite.ORDER_TYPE_MARKET
-            })
+            kite.modifyOrder(
+              {
+                exchange: openOrder.exchange as string,
+                exchangeToken: '',
+                orderId: openOrder?.order_id as string,
+                tradingSymbol: openOrder?.tradingsymbol as string,
+                userId: openOrder?.placed_by as string
+              },
+              user?.session.accessToken as string
+            )
           )
           return Promise.resolve(
             `🟢 [sllWatcher] squared off open SLL order id ${sllOrderId}`

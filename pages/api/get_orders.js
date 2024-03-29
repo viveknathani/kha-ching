@@ -9,6 +9,8 @@ import {
   syncGetKiteInstance
 } from '../../lib/utils'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
+import getInvesBrokerInstance from '../../lib/invesBroker'
+import { BrokerName } from 'inves-broker'
 dayjs.extend(advancedFormat)
 
 export default withSession(async (req, res) => {
@@ -29,9 +31,13 @@ export default withSession(async (req, res) => {
       `${process.env.DATABASE_HOST_URL}/odr_${process.env.DATABASE_USER_KEY}/${orderTag}`
     )
 
-    const kite = syncGetKiteInstance(user)
-    const rawOrders = ordersInDB?.length ? ordersInDB : await kite.getOrders()
-    const uniqueOrders = uniqBy(rawOrders, order => order.order_id)
+    const kite = await getInvesBrokerInstance(BrokerName.KITE)
+    const rawOrders = ordersInDB?.length
+      ? ordersInDB
+      : await kite.getOrders({
+          kiteAccessToken: user?.session.accessToken
+        })
+    const uniqueOrders = uniqBy(rawOrders, order => order.orderId)
 
     const orders = uniqueOrders
       .filter(order => order.tag === orderTag)

@@ -28,6 +28,8 @@ dayjs.extend(isSameOrBefore)
 import https from 'https'
 import fs from 'fs'
 import memoizer from 'memoizee'
+import getInvesBrokerInstance from './invesBroker'
+import { Broker, BrokerName } from 'inves-broker'
 
 const MOCK_ORDERS = process.env.MOCK_ORDERS
   ? JSON.parse(process.env.MOCK_ORDERS)
@@ -321,19 +323,29 @@ export function getPercentageChange (
 }
 
 export async function getInstrumentPrice (
-  kite,
+  kite: Broker,
   underlying: string,
-  exchange: string
+  exchange: string,
+  accessToken
 ): Promise<number> {
   const instrumentString = `${exchange}:${underlying}`
-  const underlyingRes = await kite.getLTP(instrumentString)
+  const underlyingRes = await kite.getLTP({
+    instruments: [instrumentString],
+    kiteAccessToken: accessToken
+  })
   return Number(underlyingRes[instrumentString].last_price)
 }
 
-export async function getSkew (kite, instrument1, instrument2, exchange) {
+export async function getSkew (
+  kite,
+  instrument1,
+  instrument2,
+  exchange,
+  accessToken
+) {
   const [price1, price2] = await Promise.all([
-    getInstrumentPrice(kite, instrument1, exchange),
-    getInstrumentPrice(kite, instrument2, exchange)
+    getInstrumentPrice(kite, instrument1, exchange, accessToken),
+    getInstrumentPrice(kite, instrument2, exchange, accessToken)
   ])
 
   const skew = getPercentageChange(price1, price2)
@@ -668,10 +680,12 @@ export const getNextNthMinute = intervalMs => {
 }
 
 export const ensureMarginForBasketOrder = async (user, orders) => {
-  const kite = syncGetKiteInstance(user)
+  const invesBrokerInstance = await getInvesBrokerInstance(BrokerName.KITE)
   const {
     equity: { net }
-  } = await kite.getMargins()
+  } = await invesBrokerInstance.getMargins({
+    kiteAccessToken: user?.session?.accessToken
+  })
 
   console.log('[ensureMarginForBasketOrder]', { net })
 

@@ -6,6 +6,8 @@ import {
   syncGetKiteInstance,
   withRemoteRetry
 } from '../utils'
+import getInvesBrokerInstance from '../invesBroker'
+import { BrokerName } from 'inves-broker'
 
 const DATABASE_HOST_URL: string = process.env.DATABASE_HOST_URL!
 const DATABASE_USER_KEY: string = process.env.DATABASE_USER_KEY!
@@ -18,8 +20,12 @@ async function orderbookSyncByTag ({
   user: SignalXUser
 }) {
   try {
-    const kite = syncGetKiteInstance(user)
-    const allOrders = await withRemoteRetry(() => kite.getOrders())
+    const invesBrokerInstance = await getInvesBrokerInstance(BrokerName.KITE)
+    const allOrders = await withRemoteRetry(() =>
+      invesBrokerInstance.getOrders({
+        kiteAccessToken: user.session.accessToken
+      })
+    )
     const ordersForTag = allOrders.filter(order => order.tag === orderTag)
     const res = await axios.post(
       `${DATABASE_HOST_URL}/odr_${DATABASE_USER_KEY}/${orderTag}`,

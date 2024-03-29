@@ -1,6 +1,8 @@
+import { Broker, BrokerName } from 'inves-broker'
 import { KiteOrder } from '../../types/kite'
 import { SL_ORDER_TYPE } from '../../types/plans'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
+import getInvesBrokerInstance from '../invesBroker'
 import console from '../logging'
 import { addToNextQueue, WATCHER_Q_NAME } from '../queue'
 import orderResponse from '../strategies/mockData/orderResponse'
@@ -12,29 +14,30 @@ import {
   syncGetKiteInstance
 } from '../utils'
 import { doDeletePendingOrders, doSquareOffPositions } from './autoSquareOff'
+import { ORDER_TYPE, TRANSACTION_TYPE } from '../constants'
 
 export const convertSlmToSll = (
   slmOrder: KiteOrder,
   slLimitPricePercent: number,
-  kite: any
+  kite: Broker
 ): KiteOrder => {
   const sllOrder = { ...slmOrder }
   const absoluteLimitPriceDelta =
     ((slLimitPricePercent ?? 0) / 100) * sllOrder.trigger_price!
   let absoluteLimitPrice
-  if (sllOrder.transaction_type === kite.TRANSACTION_TYPE_SELL) {
+  if (sllOrder.transaction_type === TRANSACTION_TYPE.SELL) {
     absoluteLimitPrice = sllOrder.trigger_price! - absoluteLimitPriceDelta
   } else {
     absoluteLimitPrice = sllOrder.trigger_price! + absoluteLimitPriceDelta
   }
 
-  sllOrder.order_type = kite.ORDER_TYPE_SL
+  sllOrder.order_type = ORDER_TYPE.SL
   sllOrder.price = round(absoluteLimitPrice)
 
   if (sllOrder.price === sllOrder.trigger_price) {
     // keep a min delta of 0.1 from trigger_price
     sllOrder.price =
-      sllOrder.transaction_type === kite.TRANSACTION_TYPE_BUY
+      sllOrder.transaction_type === TRANSACTION_TYPE.BUY
         ? sllOrder.price + 0.1
         : sllOrder.price - 0.1
   }
@@ -66,7 +69,7 @@ async function individualLegExitOrders ({
   } = initialJobData
 
   const slOrderType = SL_ORDER_TYPE.SLL
-  const kite = _kite || syncGetKiteInstance(user)
+  const kite = _kite || (await getInvesBrokerInstance(BrokerName.KITE))
 
   const exitOrders = completedOrders.map(order => {
     const {
@@ -124,7 +127,7 @@ async function individualLegExitOrders ({
 
   const { allOk, statefulOrders } = await attemptBrokerOrders(exitOrderPrs)
   if (!allOk && rollback?.onBrokenExitOrders) {
-    await doDeletePendingOrders(statefulOrders, kite)
+    await doDeletePendingOrders(statefulOrders, kite, initialJobData)
     await doSquareOffPositions(completedOrders, kite, {
       orderTag
     })

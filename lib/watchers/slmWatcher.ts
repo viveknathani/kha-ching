@@ -19,9 +19,11 @@
  *
  */
 
+import { BrokerName } from 'inves-broker'
 import { KiteOrder } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
+import getInvesBrokerInstance from '../invesBroker'
 import console from '../logging'
 import { addToNextQueue, WATCHER_Q_NAME } from '../queue'
 import {
@@ -30,6 +32,7 @@ import {
   syncGetKiteInstance,
   withRemoteRetry
 } from '../utils'
+import { ORDER_STATUS, ORDER_TYPE, TRANSACTION_TYPE } from '../constants'
 
 /**
  * [NB] IMPORTANT!
@@ -66,19 +69,24 @@ const slmWatcher = async ({
    * - we'll need to pass through the original trigger price down the rabbit hole
    */
   try {
-    const kite = syncGetKiteInstance(user)
+    const kite = await getInvesBrokerInstance(BrokerName.KITE)
     const orderHistory = (
-      await withRemoteRetry(() => kite.getOrderHistory(slmOrderId))
+      await withRemoteRetry(() =>
+        kite.getOrderHistory({
+          kiteAccessToken: user?.session.accessToken,
+          orderId: slmOrderId
+        })
+      )
     ).reverse()
     const isOrderCompleted = orderHistory.find(
-      order => order.status === kite.STATUS_COMPLETE
+      order => order.status === ORDER_STATUS.COMPLETE
     )
     if (isOrderCompleted) {
       return Promise.resolve('[slmWatcher] order COMPLETED!')
     }
 
     const cancelledOrder = orderHistory.find(order =>
-      order.status.includes(kite.STATUS_CANCELLED)
+      order.status.includes(ORDER_STATUS.CANCELLED)
     )
 
     if (!cancelledOrder) {
@@ -132,7 +140,11 @@ const slmWatcher = async ({
       return Promise.resolve('[slmWatcher] no cancelled qty!')
     }
 
-    const positions = await withRemoteRetry(() => kite.getPositions())
+    const positions = await withRemoteRetry(() =>
+      kite.getPositions({
+        kiteAccessToken: user?.session.accessToken
+      })
+    )
 
     const { net } = positions
     const openPositionThatMustBeSquaredOff = net.find(
@@ -153,14 +165,19 @@ const slmWatcher = async ({
     )
 
     const ltp = await withRemoteRetry(async () =>
-      getInstrumentPrice(kite, tradingsymbol, exchange)
+      getInstrumentPrice(
+        kite,
+        tradingsymbol,
+        exchange,
+        user?.session.accessToken
+      )
     )
 
     const newOrderType =
-      (transactionType === kite.TRANSACTION_TYPE_BUY && ltp < triggerPrice) ||
-      (transactionType === kite.TRANSACTION_TYPE_SELL && ltp > triggerPrice)
-        ? kite.ORDER_TYPE_SLM
-        : kite.ORDER_TYPE_MARKET
+      (transactionType === TRANSACTION_TYPE.BUY && ltp < triggerPrice) ||
+      (transactionType === TRANSACTION_TYPE.SELL && ltp > triggerPrice)
+        ? ORDER_TYPE.SL_M
+        : ORDER_TYPE.MARKET
 
     const exitOrder: KiteOrder = {
       tradingsymbol,
@@ -172,7 +189,7 @@ const slmWatcher = async ({
       tag: _queueJobData.initialJobData.orderTag!
     }
 
-    if (newOrderType === kite.ORDER_TYPE_SLM) {
+    if (newOrderType === ORDER_TYPE.SL_M) {
       exitOrder.trigger_price = triggerPrice
     }
 
@@ -181,7 +198,7 @@ const slmWatcher = async ({
       const { response } = await remoteOrderSuccessEnsurer({
         ensureOrderState: exitOrder.trigger_price
           ? 'TRIGGER PENDING'
-          : kite.STATUS_COMPLETE,
+          : ORDER_STATUS.CANCELLED,
         orderProps: exitOrder,
         instrument: _queueJobData.initialJobData.instrument,
         user

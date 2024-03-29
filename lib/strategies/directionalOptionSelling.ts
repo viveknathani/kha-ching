@@ -6,9 +6,14 @@ import { KiteOrder } from '../../types/kite'
 import { DIRECTIONAL_OPTION_SELLING_TRADE } from '../../types/trade'
 
 import {
+  EXCHANGE,
   INSTRUMENT_DETAILS,
+  ORDER_STATUS,
+  ORDER_TYPE,
   PRODUCT_TYPE,
-  STRATEGIES_DETAILS
+  STRATEGIES_DETAILS,
+  TRANSACTION_TYPE,
+  VALIDITY
 } from '../constants'
 import { doSquareOffPositions } from '../exit-strategies/autoSquareOff'
 import individualLegExitOrders from '../exit-strategies/individualLegExitOrders'
@@ -36,6 +41,8 @@ import {
   withRemoteRetry,
   logDeep
 } from '../utils'
+import getInvesBrokerInstance from '../invesBroker'
+import { BrokerName } from 'inves-broker'
 
 const SIGNALX_URL = process.env.SIGNALX_URL ?? 'https://indicator.signalx.trade'
 
@@ -173,7 +180,7 @@ export default async function directionalOptionSelling (
           // [NB] let this happen at least once before enabling it for everyone else
           if (isUntestedFeaturesEnabled()) {
             console.log('🔴 [dos black swan] reverting bad position')
-            const kite = syncGetKiteInstance(user)
+            const kite = await getInvesBrokerInstance(BrokerName.KITE)
             // 1. square off last trade
             await doSquareOffPositions(lastTradeOrders, kite, initialJobData)
             // 2. prevent next trade from happening
@@ -255,7 +262,7 @@ async function punchOrders (
     expiryType
   } = initialJobData
   const strikeByPriceNumber = strikeByPrice ? Number(strikeByPrice) : null
-  const kite = _kite || syncGetKiteInstance(user)
+  const kite = _kite || (await getInvesBrokerInstance(BrokerName.KITE))
   const { nfoSymbol, strikeStepSize, lotSize } = INSTRUMENT_DETAILS[instrument]
 
   const { close, ST_10_3 } = superTrend
@@ -286,7 +293,12 @@ async function punchOrders (
       })
 
   const ltp = await withRemoteRetry(async () =>
-    getInstrumentPrice(kite, optionTradingSymbol, kite.EXCHANGE_NFO)
+    getInstrumentPrice(
+      kite as any,
+      optionTradingSymbol,
+      EXCHANGE.NFO,
+      user?.session.accessToken
+    )
   )
   if (ltp < 10) {
     console.log(
@@ -315,20 +327,20 @@ async function punchOrders (
       hedgeOrder = {
         tradingsymbol: hedgeTradingSymbol,
         quantity: Number(lots) * lotSize,
-        exchange: kite.EXCHANGE_NFO,
-        transaction_type: kite.TRANSACTION_TYPE_BUY,
-        order_type: kite.ORDER_TYPE_MARKET,
+        exchange: EXCHANGE.NFO,
+        transaction_type: TRANSACTION_TYPE.BUY,
+        order_type: ORDER_TYPE.MARKET,
         product: productType,
-        validity: kite.VALIDITY_DAY,
+        validity: VALIDITY.DAY,
         tag: orderTag
       }
 
       try {
         const brokerOrderPr = remoteOrderSuccessEnsurer({
-          _kite: kite,
+          _kite: kite as any,
           orderProps: hedgeOrder,
           instrument,
-          ensureOrderState: kite.STATUS_COMPLETE,
+          ensureOrderState: ORDER_STATUS.COMPLETE,
           user: user!
         })
 
@@ -346,7 +358,11 @@ async function punchOrders (
         }
       } catch (e) {
         if (rollback?.onBrokenHedgeOrders) {
-          await doSquareOffPositions(hedgeOrdersResponse, kite, initialJobData)
+          await doSquareOffPositions(
+            hedgeOrdersResponse,
+            kite as any,
+            initialJobData
+          )
         }
         throw e
       }
@@ -356,21 +372,21 @@ async function punchOrders (
   const order = {
     tradingsymbol: optionTradingSymbol,
     quantity: Number(lots) * lotSize,
-    exchange: kite.EXCHANGE_NFO,
-    transaction_type: kite.TRANSACTION_TYPE_SELL,
-    order_type: kite.ORDER_TYPE_MARKET,
+    exchange: EXCHANGE.NFO,
+    transaction_type: TRANSACTION_TYPE.SELL,
+    order_type: ORDER_TYPE.MARKET,
     product: productType,
-    validity: kite.VALIDITY_DAY,
+    validity: VALIDITY.DAY,
     tag: orderTag
   }
 
   let rawKiteOrdersResponse: KiteOrder[] = []
   try {
     const brokerOrderPr = remoteOrderSuccessEnsurer({
-      _kite: kite,
+      _kite: kite as any,
       orderProps: order,
       instrument,
-      ensureOrderState: kite.STATUS_COMPLETE,
+      ensureOrderState: ORDER_STATUS.COMPLETE,
       user: user!
     })
 
@@ -391,7 +407,7 @@ async function punchOrders (
     if (rollback?.onBrokenPrimaryOrders) {
       await doSquareOffPositions(
         [...hedgeOrdersResponse, ...rawKiteOrdersResponse].filter(o => o),
-        kite,
+        kite as any,
         initialJobData
       )
     }
@@ -410,7 +426,7 @@ async function punchOrders (
     if (rollback?.onBrokenExitOrders) {
       await doSquareOffPositions(
         [...hedgeOrdersResponse, ...rawKiteOrdersResponse].filter(o => o),
-        kite,
+        kite as any,
         initialJobData
       )
     }
