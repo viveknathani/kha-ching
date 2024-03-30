@@ -30,6 +30,8 @@ export interface DIRECTIONAL_OPTION_SELLING_TRADE
 //   user: SignalXUser
 // }
 
+export interface DELTA_NEUTRAL_TRADE extends TradeMeta, ATM_STRANGLE_CONFIG {}
+
 export type SUPPORTED_TRADE_CONFIG =
   | ATM_STRADDLE_TRADE
   | ATM_STRANGLE_TRADE
