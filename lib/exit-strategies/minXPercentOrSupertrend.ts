@@ -97,7 +97,7 @@ async function minXPercentOrSupertrend ({
     const { data: optionSuperTrend } = await withRemoteRetry(async () =>
       axios.post(`${SIGNALX_URL}/api/indicator/supertrend`, supertrendProps, {
         headers: {
-          'X-API-KEY': process.env.SIGNALX_API_KEY
+          'X-API-KEY': process.env.SIGNALX_API_KEY!
         }
       })
     )

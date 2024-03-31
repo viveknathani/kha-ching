@@ -11,7 +11,7 @@ import { ROLLBACK_TYPE } from '../../types/plans'
 
 interface RollbackComponentProps {
   rollback: ROLLBACK_TYPE
-  onChange: ({ rollback: ROLLBACK_TYPE }) => void
+  onChange: (args: { rollback: ROLLBACK_TYPE }) => void
 }
 
 const RollbackComponent = ({ rollback, onChange }: RollbackComponentProps) => {
@@ -43,7 +43,7 @@ const RollbackComponent = ({ rollback, onChange }: RollbackComponentProps) => {
                         ...accum,
                         [key]: !isSomeRollbackOptionEnabled
                       }),
-                      {}
+                      {} as ROLLBACK_TYPE
                     )
                   })
                 }

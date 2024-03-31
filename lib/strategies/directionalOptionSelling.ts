@@ -70,7 +70,7 @@ async function fetchSuperTrend ({
     props,
     {
       headers: {
-        'X-API-KEY': process.env.SIGNALX_API_KEY
+        'X-API-KEY': process.env.SIGNALX_API_KEY!
       }
     }
   )

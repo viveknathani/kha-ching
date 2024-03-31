@@ -54,7 +54,7 @@ const useStyles = makeStyles(theme => ({
   },
   heading: {
     fontSize: theme.typography.pxToRem(15),
-    fontWeight: theme.typography.fontWeightRegular
+    fontWeight: 'normal'
   },
   formControl: {
     margin: theme.spacing(1),

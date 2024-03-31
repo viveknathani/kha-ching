@@ -100,10 +100,10 @@ async function deltaNeutralExitStrat ({
 
     const optionChain = await getOptionChain({ instrument, expiry: expiryInAngelOneFormat })
     const chainCallOption = optionChain.find(chainItem =>
-      chainItem.optionType === 'CE' && callOptionSymbol?.indexOf(`${chainItem.strikePrice}`)! >= 0
+      chainItem.optionType === 'CE' && callOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
     const chainPutOption = optionChain.find(chainItem =>
-      chainItem.optionType === 'PE' && putOptionSymbol?.indexOf(`${chainItem.strikePrice}`)! >= 0
+      chainItem.optionType === 'PE' && putOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
     const deltaDiff = Math.abs(chainCallOption.delta - Math.abs(chainPutOption.delta)) * 100
     if (deltaDiff < deltaStrikes!) {

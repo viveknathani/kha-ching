@@ -685,7 +685,7 @@ export const ensureMarginForBasketOrder = async (user, orders) => {
     orders,
     {
       headers: {
-        'X-Kite-Version': 3,
+        'X-Kite-Version': "3",
         Authorization: `token ${KITE_API_KEY as string}:${user.session
           .access_token as string}`,
         'Content-Type': 'application/json'
@@ -792,7 +792,7 @@ export const getMultipleInstrumentPrices = async (
         .join('&')}`,
       {
         headers: {
-          'X-Kite-Version': 3,
+          'X-Kite-Version': "3",
           Authorization: `token ${KITE_API_KEY as string}:${user.session
             .access_token as string}`
         }
@@ -911,7 +911,7 @@ export async function premiumAuthCheck (): Promise<any> {
 
 export const SIGNALX_AXIOS_DB_AUTH = {
   headers: {
-    'x-api-key': DATABASE_API_KEY
+    'x-api-key': DATABASE_API_KEY!
   }
 }
 
@@ -1450,7 +1450,7 @@ export async function getOptionChain({ instrument, expiry }) {
     },
     {
       headers: {
-        'X-API-KEY': process.env.SIGNALX_API_KEY
+        'X-API-KEY': process.env.SIGNALX_API_KEY!
       }
     }
   ) as {
