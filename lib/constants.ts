@@ -515,3 +515,37 @@ export const SUBSCRIBER_TYPE = {
   PREMIUM: 'PREMIUM',
   CLUB: 'CLUB'
 }
+
+export enum ORDER_TYPE {
+  MARKET = 'MARKET',
+  LIMIT = 'LIMIT',
+  SL = 'SL',
+  SL_M = 'SL-M'
+}
+
+export enum VALIDITY {
+  DAY = 'DAY',
+  IOC = 'IOC',
+  TTL = 'TTL'
+}
+
+export enum EXCHANGE {
+  NSE = 'NSE',
+  BSE = 'BSE',
+  NFO = 'NFO',
+  CDS = 'CDS',
+  BCD = 'BCD',
+  MCX = 'MCX'
+}
+
+export enum TRANSACTION_TYPE {
+  BUY = 'BUY',
+  SELL = 'SELL'
+}
+
+export enum ORDER_STATUS {
+  COMPLETE = 'COMPLETE',
+  TRIGGER_PENDING = 'TRIGGER PENDING',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED'
+}

@@ -4,8 +4,10 @@ import {
   EXPIRY_TYPE,
   INSTRUMENTS,
   INSTRUMENT_DETAILS,
+  ORDER_STATUS,
   PRODUCT_TYPE,
   STRANGLE_ENTRY_STRATEGIES,
+  TRANSACTION_TYPE,
   VOLATILITY_TYPE
 } from '../constants'
 import console from '../logging'
@@ -26,8 +28,9 @@ import {
 import { createOrder, getATMStraddle as getATMStrikes } from './atmStraddle'
 import { doSquareOffPositions } from '../exit-strategies/autoSquareOff'
 import dayjs, { Dayjs } from 'dayjs'
-import { KiteOrder } from '../../types/kite'
 import axios from 'axios'
+import getInvesBrokerInstance from '../invesBroker'
+import { BrokerName } from 'inves-broker'
 
 export const getNearestContractDate = async (
   atmStrike: number,
@@ -199,11 +202,11 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
       expiryType
     })
 
-    const kite = syncGetKiteInstance(user)
+    const kite = await getInvesBrokerInstance(BrokerName.KITE)
 
-    let allOrdersLocal: KiteOrder[] = []
-    let hedgeOrdersLocal: KiteOrder[] = []
-    let allOrders: KiteOrder[] = []
+    let allOrdersLocal: any[] = []
+    let hedgeOrdersLocal: any[] = []
+    let allOrders: any[] = []
 
     if (volatilityType === VOLATILITY_TYPE.SHORT && isHedgeEnabled) {
       const hedges = [
@@ -229,7 +232,7 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
           lotSize,
           user: user!,
           orderTag: orderTag!,
-          transactionType: kite.TRANSACTION_TYPE_BUY,
+          transactionType: TRANSACTION_TYPE.BUY,
           productType
         })
       )
@@ -246,8 +249,8 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
         productType,
         transactionType:
           volatilityType === VOLATILITY_TYPE.SHORT
-            ? kite.TRANSACTION_TYPE_SELL
-            : kite.TRANSACTION_TYPE_BUY
+            ? TRANSACTION_TYPE.SELL
+            : TRANSACTION_TYPE.BUY
       })
     )
 
@@ -261,10 +264,10 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
     if (hedgeOrdersLocal.length) {
       const hedgeOrdersPr = hedgeOrdersLocal.map(async order =>
         remoteOrderSuccessEnsurer({
-          _kite: kite,
+          _kite: kite as any,
           orderProps: order,
           instrument,
-          ensureOrderState: kite.STATUS_COMPLETE,
+          ensureOrderState: ORDER_STATUS.COMPLETE,
           user: user!
         })
       )
@@ -283,10 +286,10 @@ async function atmStrangle (args: ATM_STRANGLE_TRADE) {
 
     const brokerOrdersPr = orders.map(async order =>
       remoteOrderSuccessEnsurer({
-        _kite: kite,
+        _kite: kite as any,
         orderProps: order,
         instrument,
-        ensureOrderState: kite.STATUS_COMPLETE,
+        ensureOrderState: ORDER_STATUS.COMPLETE,
         user: user!
       })
     )

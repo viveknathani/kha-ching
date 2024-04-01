@@ -1,10 +1,10 @@
-import { KiteOrder } from '../types/kite'
+import { OrderInformation } from 'inves-broker'
 
 export interface allSettledInterface {
   status: string
   value: {
     successful: boolean
-    response: KiteOrder
+    response: OrderInformation
   }
 }
 

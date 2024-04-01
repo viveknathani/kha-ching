@@ -8,11 +8,14 @@ export default withSession(async (req, res) => {
     return res.status(401).send('Unauthorized')
   }
 
-  const kite = syncGetKiteInstance(user)
+  const kite = await getInvesBrokerInstance(BrokerName.KITE)
 
   const { id: orderId } = req.query
 
-  const orderHistory = await kite.getOrderHistory(orderId)
+  const orderHistory = await kite.getOrderHistory({
+    orderId: orderId,
+    kiteAccessToken: user?.session.accessToken
+  })
   res.json(orderHistory.reverse())
 })
 

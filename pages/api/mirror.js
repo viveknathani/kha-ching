@@ -3,6 +3,9 @@ import { KiteConnect } from 'kiteconnect'
 
 import withSession from '../../lib/session'
 import { useKiteTicker } from '../../lib/socket/ticker'
+import getInvesBrokerInstance from '../../lib/invesBroker'
+import { BrokerName } from 'inves-broker'
+import { EXCHANGE, ORDER_STATUS } from '../../lib/constants'
 const apiKey = process.env.KITE_API_KEY
 
 // Giveaway to the publisher
@@ -62,13 +65,7 @@ async function orderUpdate (trade, isTestTrade = false) {
       access_token: subscriberAccessToken
     } = subscribersDetails
 
-    const kc =
-      subscriberApiKey && subscriberAccessToken
-        ? new KiteConnect({
-            api_key: subscriberApiKey,
-            access_token: subscriberAccessToken
-          })
-        : null
+    const kc = await getInvesBrokerInstance(BrokerName.KITE)
 
     if (!kc) {
       return
@@ -85,19 +82,23 @@ async function orderUpdate (trade, isTestTrade = false) {
       quantity
     } = trade
 
-    if (status !== kc.STATUS_COMPLETE || exchange !== kc.EXCHANGE_NFO) {
+    if (status !== ORDER_STATUS.COMPLETE || exchange !== EXCHANGE.NFO) {
       return
     }
 
-    const orderRes = await kc.placeOrder(variety, {
-      tradingsymbol,
-      quantity,
-      exchange,
-      transaction_type,
-      order_type: kc.ORDER_TYPE_MARKET,
-      product: product,
-      validity
-    })
+    const orderRes = await kc.placeOrder(
+      {
+        variety,
+        tradingsymbol,
+        quantity,
+        exchange,
+        transaction_type,
+        order_type: kc.ORDER_TYPE_MARKET,
+        product: product,
+        validity
+      },
+      subscriberAccessToken
+    )
 
     console.log(orderRes)
   } catch (e) {

@@ -1,5 +1,4 @@
 import { Worker } from 'bullmq'
-import { KiteOrder } from '../../types/kite'
 import {
   DIRECTIONAL_OPTION_SELLING_TRADE,
   SUPPORTED_TRADE_CONFIG
@@ -17,12 +16,13 @@ import multiLegPremiumThreshold, {
 import console from '../logging'
 import { EXIT_TRADING_Q_NAME, redisConnection } from '../queue'
 import { getCustomBackoffStrategies, ms } from '../utils'
+import { OrderInformation } from 'inves-broker'
 
 function processJob (jobData: {
   initialJobData: SUPPORTED_TRADE_CONFIG
   jobResponse: {
-    rawKiteOrdersResponse: KiteOrder[]
-    squareOffOrders?: KiteOrder[]
+    rawKiteOrdersResponse: OrderInformation[]
+    squareOffOrders?: OrderInformation[]
   }
 }) {
   const { initialJobData, jobResponse } = jobData

@@ -8,9 +8,10 @@ import {
   syncGetKiteInstance,
   withoutFwdSlash
 } from '../../lib/utils'
-import { KiteOrder } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
+import getInvesBrokerInstance from '../../lib/invesBroker'
+import { BrokerName } from 'inves-broker'
 
 const { DATABASE_HOST_URL, DATABASE_USER_KEY } = process.env
 
@@ -22,8 +23,10 @@ export default withSession(async (req, res) => {
     return res.status(401).send('Unauthorized')
   }
 
-  const kite = syncGetKiteInstance(user)
-  const orders: KiteOrder[] = await kite.getOrders()
+  const kite = await getInvesBrokerInstance(BrokerName.KITE)
+  const orders = await kite.getOrders({
+    kiteAccessToken: user?.session.accessToken
+  })
 
   if (req.method === 'PUT') {
     const { orderId, orderTag } = req.body
@@ -44,7 +47,7 @@ export default withSession(async (req, res) => {
 
     // create a new entry
 
-    const newDbOrder = orders.find(order => order.order_id === orderId)
+    const newDbOrder = orders.find(order => order.orderId === orderId)
     const { data: updatedRes } = await axios.post(
       `${withoutFwdSlash(
         DATABASE_HOST_URL!

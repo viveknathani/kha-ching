@@ -19,7 +19,6 @@ import {
 // export const memoizer = require('redis-memoizer')(redisClient);
 import { COMPLETED_ORDER_RESPONSE } from './strategies/mockData/orderResponse'
 import { SignalXUser } from '../types/misc'
-import { KiteOrder } from '../types/kite'
 
 Promise.config({ cancellation: true, warnings: true })
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -28,6 +27,8 @@ dayjs.extend(isSameOrBefore)
 import https from 'https'
 import fs from 'fs'
 import memoizer from 'memoizee'
+import getInvesBrokerInstance from './invesBroker'
+import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 
 const MOCK_ORDERS = process.env.MOCK_ORDERS
   ? JSON.parse(process.env.MOCK_ORDERS)
@@ -321,19 +322,29 @@ export function getPercentageChange (
 }
 
 export async function getInstrumentPrice (
-  kite,
+  kite: Broker,
   underlying: string,
-  exchange: string
+  exchange: string,
+  accessToken
 ): Promise<number> {
   const instrumentString = `${exchange}:${underlying}`
-  const underlyingRes = await kite.getLTP(instrumentString)
+  const underlyingRes = await kite.getLTP({
+    instruments: [instrumentString],
+    kiteAccessToken: accessToken
+  })
   return Number(underlyingRes[instrumentString].last_price)
 }
 
-export async function getSkew (kite, instrument1, instrument2, exchange) {
+export async function getSkew (
+  kite,
+  instrument1,
+  instrument2,
+  exchange,
+  accessToken
+) {
   const [price1, price2] = await Promise.all([
-    getInstrumentPrice(kite, instrument1, exchange),
-    getInstrumentPrice(kite, instrument2, exchange)
+    getInstrumentPrice(kite, instrument1, exchange, accessToken),
+    getInstrumentPrice(kite, instrument2, exchange, accessToken)
   ])
 
   const skew = getPercentageChange(price1, price2)
@@ -345,7 +356,7 @@ export async function getSkew (kite, instrument1, instrument2, exchange) {
 }
 
 export function syncGetKiteInstance (user) {
-  const accessToken = user?.session?.access_token
+  const accessToken = user?.session?.accessToken
   if (!accessToken) {
     throw new Error(
       'missing access_token in `user` object, or `user` is undefined'
@@ -621,7 +632,7 @@ export const checkHasSameAccessToken = async (accessToken: string) => {
     const {
       data: [token]
     } = await axios(ACCESS_TOKEN_URL)
-    const { access_token: dbAccessToken } = token
+    const { accessToken: dbAccessToken } = token
     return dbAccessToken === accessToken
   } catch (e) {
     console.log('🔴 [storeAccessTokenRemotely] error', e)
@@ -629,24 +640,21 @@ export const checkHasSameAccessToken = async (accessToken: string) => {
   }
 }
 
-export const storeAccessTokenRemotely = async (accessToken: string, refreshToken?: string) => {
+export const storeAccessTokenRemotely = async (
+  accessToken: string,
+  refreshToken?: string
+) => {
   const ACCESS_TOKEN_URL = `${withoutFwdSlash(
     DATABASE_HOST_URL as string
   )}/pvt_${DATABASE_USER_KEY as string}/tokens`
   const data = {
     access_token: accessToken
   }
-
   if (refreshToken) {
     data['refresh_token'] = refreshToken
   }
-
   try {
-    await axios.post(
-      ACCESS_TOKEN_URL,
-      data,
-      SIGNALX_AXIOS_DB_AUTH
-    )
+    await axios.post(ACCESS_TOKEN_URL, data, SIGNALX_AXIOS_DB_AUTH)
   } catch (e) {
     console.log('🔴 [storeAccessTokenRemotely] error', e)
   }
@@ -671,10 +679,12 @@ export const getNextNthMinute = intervalMs => {
 }
 
 export const ensureMarginForBasketOrder = async (user, orders) => {
-  const kite = syncGetKiteInstance(user)
+  const invesBrokerInstance = await getInvesBrokerInstance(BrokerName.KITE)
   const {
     equity: { net }
-  } = await kite.getMargins()
+  } = await invesBrokerInstance.getMargins({
+    kiteAccessToken: user?.session?.accessToken
+  })
 
   console.log('[ensureMarginForBasketOrder]', { net })
 
@@ -792,7 +802,7 @@ export const getMultipleInstrumentPrices = async (
         headers: {
           'X-Kite-Version': 3,
           Authorization: `token ${KITE_API_KEY as string}:${user.session
-            .access_token as string}`
+            .accessToken as string}`
         }
       }
     )
@@ -1080,7 +1090,7 @@ export const orderStateChecker = (kite, orderId, ensureOrderState) => {
 export const remoteOrderSuccessEnsurer = async (args: {
   _kite?: Record<string, unknown>
   ensureOrderState: string
-  orderProps: Partial<KiteOrder>
+  orderProps: Partial<OrderInformation>
   instrument: INSTRUMENTS
   onFailureRetryAfterMs?: number
   retryAttempts?: number
@@ -1090,7 +1100,7 @@ export const remoteOrderSuccessEnsurer = async (args: {
   attemptCount?: number
 }): Promise<{
   successful: boolean
-  response?: KiteOrder[]
+  response?: OrderInformation[]
 }> => {
   const {
     _kite,
@@ -1245,10 +1255,10 @@ export const remoteOrderSuccessEnsurer = async (args: {
         const matchedOrder = orders.find(
           order =>
             order.tag === orderProps.tag &&
-            order.tradingsymbol === orderProps.tradingsymbol &&
+            order.tradingsymbol === orderProps.tradingSymbol &&
             order.quantity === orderProps.quantity &&
             order.product === orderProps.product &&
-            order.transaction_type === orderProps.transaction_type &&
+            order.transaction_type === orderProps.transactionType &&
             order.exchange === orderProps.exchange
         )
 
@@ -1327,7 +1337,7 @@ export const attemptBrokerOrders = async (
   ordersPr: Array<Promise<any>>
 ): Promise<{
   allOk: boolean
-  statefulOrders: KiteOrder[]
+  statefulOrders: OrderInformation[]
 }> => {
   try {
     const brokerOrderResolutions = await allSettled(ordersPr)
@@ -1337,7 +1347,7 @@ export const attemptBrokerOrders = async (
       (res: allSettledInterface) => res.status === 'rejected'
     )
     const successfulOrders: Array<
-      KiteOrder | null
+      OrderInformation | null
     > = (brokerOrderResolutions as any)
       .map((res: allSettledInterface) =>
         res.status === 'fulfilled' && res.value.successful
@@ -1353,13 +1363,13 @@ export const attemptBrokerOrders = async (
     if (rejectedLegs.length > 0) {
       return {
         allOk: false,
-        statefulOrders: successfulOrders as KiteOrder[]
+        statefulOrders: successfulOrders as OrderInformation[]
       }
     }
 
     return {
       allOk: true,
-      statefulOrders: successfulOrders as KiteOrder[]
+      statefulOrders: successfulOrders as OrderInformation[]
     }
   } catch (e) {
     console.log('🔴 [attemptBrokerOrders] error', e)

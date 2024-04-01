@@ -1,5 +1,6 @@
+import { OrderInformation, SessionInformation } from 'inves-broker'
 import { STRATEGIES } from '../lib/constants'
-import { KiteOrder, KiteProfile } from './kite'
+import { KiteOrder } from './kite'
 import { AvailablePlansConfig } from './plans'
 
 export type DailyPlansDayKey =
@@ -17,12 +18,12 @@ export interface DailyPlansDisplayValue {
 
 export type DailyPlansConfig = Record<DailyPlansDayKey, DailyPlansDisplayValue>
 
-export interface SignalXOrder extends KiteOrder {
+export interface SignalXOrder extends OrderInformation {
   humanTradingSymbol: string
 }
 
 export interface SignalXUser {
-  session: KiteProfile
+  session: SessionInformation
   isLoggedIn: boolean
 }
 
