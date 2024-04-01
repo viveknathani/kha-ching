@@ -693,9 +693,9 @@ export const ensureMarginForBasketOrder = async (user, orders) => {
     orders,
     {
       headers: {
-        'X-Kite-Version': 3,
+        'X-Kite-Version': "3",
         Authorization: `token ${KITE_API_KEY as string}:${user.session
-          .access_token as string}`,
+          .accessToken as string}`,
         'Content-Type': 'application/json'
       }
     }
@@ -800,7 +800,7 @@ export const getMultipleInstrumentPrices = async (
         .join('&')}`,
       {
         headers: {
-          'X-Kite-Version': 3,
+          'X-Kite-Version': "3",
           Authorization: `token ${KITE_API_KEY as string}:${user.session
             .accessToken as string}`
         }
