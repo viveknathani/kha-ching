@@ -6814,10 +6814,10 @@ invert-kv@^2.0.0:
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-2.0.0.tgz#7393f5afa59ec9ff5f67a27620d11c226e3eec02"
   integrity sha512-wPVv/y/QQ/Uiirj/vh3oP+1Ww+AWehmi1g5fFWGPF6IpCBCDVrhgHRMvrLfdYcwDh3QJbGXDW4JAuzxElLSqKA==
 
-inves-broker@^0.6.3:
-  version "0.6.3"
-  resolved "https://registry.yarnpkg.com/inves-broker/-/inves-broker-0.6.3.tgz#f54cfa52f3f603944d405f61095b0def6393db6b"
-  integrity sha512-aeTpYY24KL8CFbva3c9Qo9/ffp/08xNHQLaJG/1Tzn7udJ/z0FUcFmbFlISRrNMweKvoKxO8oq0UYHfmnqF0CQ==
+inves-broker@^0.6.4:
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/inves-broker/-/inves-broker-0.6.4.tgz#5bb8d8c749e151e759a6323f937b2988c1ddee19"
+  integrity sha512-qKirLJXSGwgZUHWSrjB1yd440gkupW8bsZT9weVa7U4JmRPdY+SRjh4yUP+k74lqm0g1EzyJv6QKHdllZPOaYg==
   dependencies:
     adm-zip "^0.5.10"
     aes-everywhere "^1.0.0"
