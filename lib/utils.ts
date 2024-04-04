@@ -120,17 +120,20 @@ export const getSortedMatchingIntrumentsData = async ({
   nfoSymbol,
   strike,
   instrumentType,
-  tradingsymbol
+  tradingsymbol,
+  instrumentToken
 }: {
   nfoSymbol?: string
   strike?: number
   instrumentType?: string
-  tradingsymbol?: string
+  tradingsymbol?: string,
+  instrumentToken?: string,
 }): Promise<KITE_INSTRUMENT_INFO[]> => {
   const instrumentsData = await getIndexInstruments()
   const rows: KITE_INSTRUMENT_INFO[] = instrumentsData
     .filter(
       item =>
+        (instrumentToken ? item.instrument_token == instrumentToken : true) && // eslint-disable-line
         (nfoSymbol ? item.name === nfoSymbol : true) &&
         (strike ? item.strike == strike : true) && // eslint-disable-line
         (tradingsymbol ? item.tradingsymbol === tradingsymbol : true) &&
@@ -893,21 +896,21 @@ export function withoutFwdSlash (url: string): string {
   return url
 }
 
-export async function premiumAuthCheck (): Promise<any> {
-  if (!process.env.SIGNALX_API_KEY) {
-    return false
-  }
+// export async function premiumAuthCheck (): Promise<any> {
+//   if (!process.env.SIGNALX_API_KEY) {
+//     return false
+//   }
 
-  return axios.post(
-    `${SIGNALX_URL}/api/auth`,
-    {},
-    {
-      headers: {
-        'X-API-KEY': process.env.SIGNALX_API_KEY
-      }
-    }
-  )
-}
+//   return axios.post(
+//     `${SIGNALX_URL}/api/auth`,
+//     {},
+//     {
+//       headers: {
+//         'X-API-KEY': process.env.SIGNALX_API_KEY
+//       }
+//     }
+//   )
+// }
 
 export const SIGNALX_AXIOS_DB_AUTH = {
   headers: {

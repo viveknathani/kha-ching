@@ -49,14 +49,14 @@ const SIGNALX_URL = process.env.SIGNALX_URL ?? 'https://indicator.signalx.trade'
 // update SL = min(SLM%, Supertrend)
 
 async function fetchSuperTrend ({
-  instrument_token,
+  exchange_token,
   from_date,
   to_date,
   ...otherProps
 }) {
   //eslint-disable-line
   const props = {
-    instrument_token,
+    exchange_token,
     from_date,
     to_date,
     interval: '5minute',
@@ -105,7 +105,8 @@ export default async function directionalOptionSelling (
     const { nfoSymbol } = INSTRUMENT_DETAILS[instrument]
 
     const {
-      instrument_token: futInstrumentToken
+      exchange,
+      exchange_token: futInstrumentToken,
     } = (await getExpiryTradingSymbol({
       nfoSymbol,
       instrumentType: 'FUT',
@@ -113,14 +114,15 @@ export default async function directionalOptionSelling (
     })) as TradingSymbolInterface
 
     const DATE_FORMAT = 'YYYY-MM-DD'
-    const DATE_TIME_FORMAT = `${DATE_FORMAT} HH:mm:ss`
+    const DATE_TIME_FORMAT = `${DATE_FORMAT} HH:mm`
     const lastOpenDate = getLastOpenDateSince(dayjs()).format(DATE_FORMAT)
     const nearestClosedCandleTime = getNearestCandleTime(5 * 60 * 1000).format(
       DATE_TIME_FORMAT
     )
 
     const supertrendProps = {
-      instrument_token: futInstrumentToken,
+      exchange,
+      exchange_token: futInstrumentToken,
       from_date: lastOpenDate,
       to_date: nearestClosedCandleTime
     }

@@ -225,7 +225,7 @@ export const STRATEGIES_DETAILS = {
     }
   },
   [STRATEGIES.DIRECTIONAL_OPTION_SELLING]: {
-    premium: true,
+    premium: false,
     heading: 'Directional Option Selling',
     defaultRunAt: dayjs()
       .set('hour', 9)
@@ -265,44 +265,44 @@ export const STRATEGIES_DETAILS = {
         'when trend reverses from live trend and then every time trend reverses'
     }
   },
-  [STRATEGIES.OPTION_BUYING_STRATEGY]: {
-    premium: true,
-    heading: 'Option Buying Strategy',
-    defaultRunAt: dayjs()
-      .set('hour', 9)
-      .set('minutes', 30)
-      .set('seconds', 0)
-      .format(),
-    schedule: [
-      {
-        afterTime: () =>
-          dayjs()
-            .set('hour', 9)
-            .set('minutes', 30)
-            .set('seconds', 0)
-            .subtract(1, 'second'),
-        beforeTime: () =>
-          dayjs()
-            .set('hour', 11)
-            .set('minutes', 0)
-            .set('seconds', 0)
-      },
-      {
-        afterTime: () =>
-          dayjs()
-            .set('hour', 13)
-            .set('minutes', 0)
-            .set('seconds', 0)
-            .subtract(1, 'second'),
-        beforeTime: () =>
-          dayjs()
-            .set('hour', 15)
-            .set('minutes', 0)
-            .set('seconds', 0)
-      }
-    ],
-    defaultFormState: {}
-  }
+  // [STRATEGIES.OPTION_BUYING_STRATEGY]: {
+  //   premium: true,
+  //   heading: 'Option Buying Strategy',
+  //   defaultRunAt: dayjs()
+  //     .set('hour', 9)
+  //     .set('minutes', 30)
+  //     .set('seconds', 0)
+  //     .format(),
+  //   schedule: [
+  //     {
+  //       afterTime: () =>
+  //         dayjs()
+  //           .set('hour', 9)
+  //           .set('minutes', 30)
+  //           .set('seconds', 0)
+  //           .subtract(1, 'second'),
+  //       beforeTime: () =>
+  //         dayjs()
+  //           .set('hour', 11)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //     },
+  //     {
+  //       afterTime: () =>
+  //         dayjs()
+  //           .set('hour', 13)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //           .subtract(1, 'second'),
+  //       beforeTime: () =>
+  //         dayjs()
+  //           .set('hour', 15)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //     }
+  //   ],
+  //   defaultFormState: {}
+  // }
 }
 
 export const ROLLBACK_KEY_MAP = {
