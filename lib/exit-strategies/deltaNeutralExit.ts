@@ -5,7 +5,7 @@ import { COMBINED_SL_EXIT_STRATEGY } from '../../types/plans'
 import { ATM_STRADDLE_TRADE, ATM_STRANGLE_TRADE, DELTA_NEUTRAL_TRADE } from '../../types/trade'
 import { EXIT_STRATEGIES, USER_OVERRIDE } from '../constants'
 import console from '../logging'
-import { addToNextQueue, EXIT_TRADING_Q_NAME } from '../queue'
+import { addToNextQueue, EXIT_TRADING_Q_NAME, TRADING_Q_NAME } from '../queue'
 import {
   getTimeLeftInMarketClosingMs,
   syncGetKiteInstance,
@@ -14,7 +14,8 @@ import {
   delay,
   ms,
   getSortedMatchingIntrumentsData,
-  getOptionChain
+  getOptionChain,
+  getNextNthMinute
 } from '../utils'
 
 import { doSquareOffPositions } from './autoSquareOff'
@@ -132,7 +133,21 @@ async function deltaNeutralExitStrat ({
     const exitMsg = `☢️ [deltaNeutralExitStrat] triggered!)`
     console.log(exitMsg)
 
-    return doSquareOffPositions(squareOffOrders!, kite, initialJobData)
+    await doSquareOffPositions(squareOffOrders!, kite, initialJobData)
+
+    // setup next run
+    if (getTimeLeftInMarketClosingMs() < 40 * 60 * 1000) {
+      return `🟢 [delta neutral] Terminating Delta neutral trade; less than 40 mins in market closing.`
+    }
+
+    return await addToNextQueue({
+      ...initialJobData,
+      runNow: false,
+      runAt: getNextNthMinute(ms(5 * 60))
+    }, {
+      _nextTradingQueue: TRADING_Q_NAME
+    })
+
   } catch (e) {
     console.log('☢️ [deltaNeutralExitStrat] terminated', e)
     return Promise.resolve(e)
