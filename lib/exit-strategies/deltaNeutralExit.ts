@@ -87,7 +87,7 @@ async function deltaNeutralExitStrat ({
     const callOptionSymbol = tradingSymbols.find(item => item.indexOf('CE') >= 0);
     const putOptionSymbol = tradingSymbols.find(item => item.indexOf('PE') >= 0);
 
-    // [TODO] fetch the option chain here
+    // fetch the option chain here
     // get delta of tradingSymbols and difference between them
     // if difference exceeds user delta
     // then trigger exit condition
@@ -99,14 +99,14 @@ async function deltaNeutralExitStrat ({
     const expiryDate = expiryInKiteFormat[0].expiry;
     const expiryInAngelOneFormat = dayjs(expiryDate).format('DDMMMYYYY').toUpperCase()
 
-    const optionChain = await getOptionChain({ instrument, expiry: expiryInAngelOneFormat })
+    const optionChain = await withRemoteRetry(async () => getOptionChain({ instrument, expiry: expiryInAngelOneFormat }))
     const chainCallOption = optionChain.find(chainItem =>
       chainItem.optionType === 'CE' && callOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
     const chainPutOption = optionChain.find(chainItem =>
       chainItem.optionType === 'PE' && putOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
-    const deltaDiff = Math.abs(chainCallOption.delta - Math.abs(chainPutOption.delta)) * 100
+    const deltaDiff = Math.abs(chainCallOption.delta - Math.abs(chainPutOption.delta))
     if (deltaDiff < deltaStrikes!) {
       const rejectMsg = `🟢 [deltaNeutralExitStrat] deltaDiff (${deltaDiff}) < threshold (${deltaStrikes!})`
       // update db trade with new delta diff
@@ -149,7 +149,14 @@ async function deltaNeutralExitStrat ({
     })
 
   } catch (e) {
-    console.log('☢️ [deltaNeutralExitStrat] terminated', e)
+    console.log('☢️ [deltaNeutralExitStrat] errored', e)
+    console.log('...adding to queue again...')
+    await addToNextQueue(initialJobData, {
+      _nextTradingQueue: EXIT_TRADING_Q_NAME,
+      rawKiteOrdersResponse,
+      squareOffOrders
+    })
+
     return Promise.resolve(e)
   }
 }

@@ -963,7 +963,7 @@ export const withRemoteRetry = async (
           }
 
           console.log('withRemoteRetry attempt failed', e)
-          await Promise.delay(ms(2))
+          await Promise.delay(ms(5))
           return fn()
         }
       }
@@ -1420,7 +1420,12 @@ export const getStrikeByDelta = (
       putStrike: apiResponseObject
       callStrike: apiResponseObject
     } => {
-  const putStrike = closest(delta, optionChain.filter(item => item.optionType === 'PE'), 'delta', false)
+  const putStrike = closest(
+    delta, 
+    optionChain
+      .filter(item => item.optionType === 'PE')
+      .map(item => ({...item, delta: Math.abs(item.delta)})), 
+    'delta', false)
   const callStrike = closest(delta, optionChain.filter(item => item.optionType === 'CE'), 'delta', false)
   if (type === 'PE') {
     return putStrike
@@ -1445,17 +1450,14 @@ export async function getOptionChain({ instrument, expiry }) {
   const { data: optionChain } = (await axios.post(
     `${SIGNALX_BACKEND_URI}/api/v1/greeks`,
     {
-      name: instrument,
-      expiry: expiry
-    },
-    {
-      headers: {
-        'X-API-KEY': process.env.SIGNALX_API_KEY!
-      }
+      instrument,
+      expiry
     }
   ) as {
     data: apiResponseObject[]
   })
+
+  // console.log(optionChain)
 
   return optionChain;
 }

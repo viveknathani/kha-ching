@@ -81,6 +81,7 @@ export const getStrangleStrikes = async ({
         instrument,
         expiry: nearestContractDate.format('DDMMMYYYY').toUpperCase()
       })
+
       const strikes = getStrikeByDelta(deltaStrikes!, optionChain)
       const { putStrike, callStrike } = strikes as {
         putStrike: apiResponseObject
