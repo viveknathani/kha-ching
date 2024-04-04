@@ -5,7 +5,7 @@ import { cleanupQueues } from '../../lib/queue'
 import withSession from '../../lib/session'
 import {
   getIndexInstruments,
-  premiumAuthCheck,
+  // premiumAuthCheck,
   storeAccessTokenRemotely,
   checkHasSameAccessToken
 } from '../../lib/utils'
@@ -36,9 +36,9 @@ export default withSession(async (req, res) => {
 
     // prepare the day
     // fire and forget
-    premiumAuthCheck().catch(e => {
-      console.log(e)
-    })
+    // premiumAuthCheck().catch(e => {
+    //   console.log(e)
+    // })
     getIndexInstruments().catch(e => {
       console.log(e)
     })
