@@ -312,6 +312,9 @@ export const ROLLBACK_KEY_MAP = {
 }
 
 export const EXIT_STRATEGIES_DETAILS = {
+  [EXIT_STRATEGIES.DELTA_DIFFERENCE]: {
+    label: 'Delta neutral'
+  },
   [EXIT_STRATEGIES.INDIVIDUAL_LEG_SLM_1X]: {
     label: 'Fixed SL% on all legs'
   },

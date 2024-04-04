@@ -70,7 +70,8 @@ const TradeSetupForm = ({
   ]
   const exitStrategies = [
     EXIT_STRATEGIES.INDIVIDUAL_LEG_SLM_1X,
-    EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD
+    EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD,
+    EXIT_STRATEGIES.DELTA_DIFFERENCE
   ]
 
   const handleFormSubmit = e => {
