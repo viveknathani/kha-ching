@@ -115,7 +115,7 @@ export default async function directionalOptionSelling (
 
     const DATE_FORMAT = 'YYYY-MM-DD'
     const DATE_TIME_FORMAT = `${DATE_FORMAT} HH:mm`
-    const lastOpenDate = getLastOpenDateSince(dayjs()).format(DATE_FORMAT)
+    const lastOpenDate = `${getLastOpenDateSince(dayjs()).format(DATE_FORMAT)} 09:15`
     const nearestClosedCandleTime = getNearestCandleTime(5 * 60 * 1000).format(
       DATE_TIME_FORMAT
     )
