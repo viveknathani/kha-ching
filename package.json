@@ -32,7 +32,7 @@
     "dayjs": "^1.10.4",
     "esm": "^3.2.25",
     "fyers-api": "^1.1.0",
-    "inves-broker": "^0.6.3",
+    "inves-broker": "^0.6.4",
     "ioredis": "^4.22.0",
     "kiteconnect": "^3.2.0",
     "lodash": "^4.17.21",

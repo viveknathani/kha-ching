@@ -688,20 +688,9 @@ export const ensureMarginForBasketOrder = async (user, orders) => {
 
   console.log('[ensureMarginForBasketOrder]', { net })
 
-  const { data } = await axios.post(
-    'https://api.kite.trade/margins/basket?consider_positions=true&mode=compact',
-    orders,
-    {
-      headers: {
-        'X-Kite-Version': "3",
-        Authorization: `token ${KITE_API_KEY as string}:${user.session
-          .accessToken as string}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  )
+  const data = await invesBrokerInstance.checkMargin(orders, user?.session?.accessToken);
 
-  const totalMarginRequired = data?.data?.initial?.total
+  const totalMarginRequired = data.marginRequired;
 
   console.log('[ensureMarginForBasketOrder]', { totalMarginRequired })
 
