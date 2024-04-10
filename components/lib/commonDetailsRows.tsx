@@ -21,6 +21,8 @@ const CommonDetailsRows = ({
   liveTrailingSl,
   lastTrailingSlSetAt,
   lastHeartbeatAt,
+  liveDeltaDiff,
+  lastDetaDiffSetAt,
   expiryType
 }) => {
   const getAlgoStatus = useCallback(
@@ -48,6 +50,12 @@ const CommonDetailsRows = ({
   const lastHeartbeatAtString = !lastHeartbeatAt
     ? '-'
     : dayjs(lastHeartbeatAt).format('hh:mma')
+  const lastDeltaDiffString = !liveDeltaDiff
+    ? '-'
+    : liveDeltaDiff;
+  const lastDetaDiffSetAtString = !lastDetaDiffSetAt
+    ? '-'
+    : dayjs(lastDetaDiffSetAt).format('hh:mma')
 
   useEffect(() => {
     setAlgoStatus(getAlgoStatus())
@@ -76,7 +84,20 @@ const CommonDetailsRows = ({
       : null,
     exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD
       ? [{ value: 'Automation status' }, { value: algoStatus }]
-      : null
+      : null,
+    exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
+      ? [{ value: 'Last Delta Diff' }, { value: lastDeltaDiffString }]
+      : null,
+      exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
+      ? [{ value: 'Last Delta Diff Time' }, { value: lastDetaDiffSetAtString }]
+      : null,
+    exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
+      ? [{ value: 'Last Heartbeat' }, { value: lastHeartbeatAtString }]
+      : null,
+    exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
+    ? [{ value: 'Automation status' }, { value: algoStatus }]
+    : null,
+
   ].filter(o => o)
 }
 

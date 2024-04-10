@@ -179,7 +179,7 @@ const OptionBuyingStrategy = ({
     try {
       const responses = await Promise.all(jobs)
       const data = responses.reduce(
-        (accum, res) => [...accum, ...res?.data],
+        (accum, res) => [...accum, ...res!.data],
         []
       )
       setDb(exDb => ({

@@ -15,7 +15,7 @@ export default withSession(async (req, res) => {
       .access_token as string}`,
     {
       headers: {
-        'X-Kite-Version': 3
+        'X-Kite-Version': "3"
       }
     }
   )

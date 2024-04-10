@@ -19,9 +19,10 @@ import {
   getExpiryTradingSymbol,
   getHedgeForStrike,
   getIndexInstruments,
+  getOptionChain,
   getStrikeByDelta,
   remoteOrderSuccessEnsurer,
-  SIGNALX_URL,
+  SIGNALX_BACKEND_URI,
   syncGetKiteInstance,
   TradingSymbolInterface
 } from '../utils'
@@ -52,7 +53,7 @@ export const getNearestContractDate = async (
   return dayjs(dataRow.expiry)
 }
 
-const getStrangleStrikes = async ({
+export const getStrangleStrikes = async ({
   atmStrike,
   instrument,
   inverted = false,
@@ -79,26 +80,19 @@ const getStrangleStrikes = async ({
       nfoSymbol
     )
     try {
-      const { data: optionChain } = await axios.post(
-        `${SIGNALX_URL}/api/data/option_chain`,
-        {
-          instrument,
-          contract: nearestContractDate.format('DDMMMYYYY').toUpperCase()
-        },
-        {
-          headers: {
-            'X-API-KEY': process.env.SIGNALX_API_KEY
-          }
-        }
-      )
+      const optionChain = await getOptionChain({
+        instrument,
+        expiry: nearestContractDate.format('DDMMMYYYY').toUpperCase()
+      })
+
       const strikes = getStrikeByDelta(deltaStrikes!, optionChain)
       const { putStrike, callStrike } = strikes as {
         putStrike: apiResponseObject
         callStrike: apiResponseObject
       }
 
-      lowerLegPEStrike = putStrike.StrikePrice
-      higherLegCEStrike = callStrike.StrikePrice
+      lowerLegPEStrike = putStrike.strikePrice
+      higherLegCEStrike = callStrike.strikePrice
     } catch (e) {
       if (e.isAxiosError) {
         if (e.response.status === 401) {

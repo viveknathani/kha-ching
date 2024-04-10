@@ -46,6 +46,17 @@ const SlManagerComponent = ({ state, onChange, exitStrategies }) => {
           </RadioGroup>
         </FormControl>
       </Grid>
+      {state.exitStrategy === EXIT_STRATEGIES.INDIVIDUAL_LEG_SLM_1X ? (
+        <Grid item xs={12} style={{ marginBottom: '16px' }}>
+          <TextField
+            fullWidth
+            name='slmPercent'
+            value={state.slmPercent}
+            onChange={e => onChange({ slmPercent: +e.target.value || undefined })}
+            label='SL %'
+          />
+        </Grid>      
+      ): null}
       {state.exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD ? (
         <>
           <Grid item xs={12}>
@@ -105,24 +116,22 @@ const SlManagerComponent = ({ state, onChange, exitStrategies }) => {
               label='Trailing SL %'
             />
           </Grid>
+
+          <Grid item xs={12} style={{ marginBottom: '16px' }}>
+            <TextField
+              fullWidth
+              name='slmPercent'
+              value={state.slmPercent}
+              onChange={e => onChange({ slmPercent: +e.target.value || undefined })}
+              label='Initial SL %'
+            />
+          </Grid>
         </>
       ) : null}
 
-      <Grid item xs={12} style={{ marginBottom: '16px' }}>
-        <TextField
-          fullWidth
-          name='slmPercent'
-          value={state.slmPercent}
-          onChange={e => onChange({ slmPercent: +e.target.value || undefined })}
-          label={
-            state.exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD
-              ? 'Initial SL %'
-              : 'SL %'
-          }
-        />
-      </Grid>
 
-      {state.exitStrategy !== EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD ||
+      {state.exitStrategy !== EXIT_STRATEGIES.DELTA_DIFFERENCE &&
+      state.exitStrategy !== EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD ||
       (state.exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD &&
         state.combinedExitStrategy ===
           COMBINED_SL_EXIT_STRATEGY.EXIT_LOSING) ? (

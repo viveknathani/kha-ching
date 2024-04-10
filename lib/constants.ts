@@ -83,7 +83,8 @@ export enum EXIT_STRATEGIES {
   INDIVIDUAL_LEG_SLM_1X = 'INDIVIDUAL_LEG_SLM_1X',
   MULTI_LEG_PREMIUM_THRESHOLD = 'MULTI_LEG_PREMIUM_THRESHOLD',
   MIN_XPERCENT_OR_SUPERTREND = 'MIN_XPERCENT_OR_SUPERTREND',
-  OBS_TRAIL_SL = 'OBS_TRAIL_SL'
+  OBS_TRAIL_SL = 'OBS_TRAIL_SL',
+  DELTA_DIFFERENCE = 'DELTA_DIFFERENCE'
 }
 
 export enum DOS_ENTRY_STRATEGIES {
@@ -198,7 +199,7 @@ export const STRATEGIES_DETAILS = {
       inverted: false,
       entryStrategy: STRANGLE_ENTRY_STRATEGIES.DISTANCE_FROM_ATM,
       distanceFromAtm: 1,
-      deltaStrikes: 20,
+      deltaStrikes: 0.3,
       productType: PRODUCT_TYPE.MIS,
       volatilityType: VOLATILITY_TYPE.SHORT,
       expiryType: EXPIRY_TYPE.CURRENT,
@@ -224,7 +225,7 @@ export const STRATEGIES_DETAILS = {
     }
   },
   [STRATEGIES.DIRECTIONAL_OPTION_SELLING]: {
-    premium: true,
+    premium: false,
     heading: 'Directional Option Selling',
     defaultRunAt: dayjs()
       .set('hour', 9)
@@ -264,44 +265,44 @@ export const STRATEGIES_DETAILS = {
         'when trend reverses from live trend and then every time trend reverses'
     }
   },
-  [STRATEGIES.OPTION_BUYING_STRATEGY]: {
-    premium: true,
-    heading: 'Option Buying Strategy',
-    defaultRunAt: dayjs()
-      .set('hour', 9)
-      .set('minutes', 30)
-      .set('seconds', 0)
-      .format(),
-    schedule: [
-      {
-        afterTime: () =>
-          dayjs()
-            .set('hour', 9)
-            .set('minutes', 30)
-            .set('seconds', 0)
-            .subtract(1, 'second'),
-        beforeTime: () =>
-          dayjs()
-            .set('hour', 11)
-            .set('minutes', 0)
-            .set('seconds', 0)
-      },
-      {
-        afterTime: () =>
-          dayjs()
-            .set('hour', 13)
-            .set('minutes', 0)
-            .set('seconds', 0)
-            .subtract(1, 'second'),
-        beforeTime: () =>
-          dayjs()
-            .set('hour', 15)
-            .set('minutes', 0)
-            .set('seconds', 0)
-      }
-    ],
-    defaultFormState: {}
-  }
+  // [STRATEGIES.OPTION_BUYING_STRATEGY]: {
+  //   premium: true,
+  //   heading: 'Option Buying Strategy',
+  //   defaultRunAt: dayjs()
+  //     .set('hour', 9)
+  //     .set('minutes', 30)
+  //     .set('seconds', 0)
+  //     .format(),
+  //   schedule: [
+  //     {
+  //       afterTime: () =>
+  //         dayjs()
+  //           .set('hour', 9)
+  //           .set('minutes', 30)
+  //           .set('seconds', 0)
+  //           .subtract(1, 'second'),
+  //       beforeTime: () =>
+  //         dayjs()
+  //           .set('hour', 11)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //     },
+  //     {
+  //       afterTime: () =>
+  //         dayjs()
+  //           .set('hour', 13)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //           .subtract(1, 'second'),
+  //       beforeTime: () =>
+  //         dayjs()
+  //           .set('hour', 15)
+  //           .set('minutes', 0)
+  //           .set('seconds', 0)
+  //     }
+  //   ],
+  //   defaultFormState: {}
+  // }
 }
 
 export const ROLLBACK_KEY_MAP = {
@@ -311,6 +312,9 @@ export const ROLLBACK_KEY_MAP = {
 }
 
 export const EXIT_STRATEGIES_DETAILS = {
+  [EXIT_STRATEGIES.DELTA_DIFFERENCE]: {
+    label: 'Delta neutral'
+  },
   [EXIT_STRATEGIES.INDIVIDUAL_LEG_SLM_1X]: {
     label: 'Fixed SL% on all legs'
   },

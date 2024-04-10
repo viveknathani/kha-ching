@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
 import {
+  DELTA_NEUTRAL_TRADE,
   DIRECTIONAL_OPTION_SELLING_TRADE,
   SUPPORTED_TRADE_CONFIG
 } from '../../types/trade'
@@ -17,6 +18,7 @@ import console from '../logging'
 import { EXIT_TRADING_Q_NAME, redisConnection } from '../queue'
 import { getCustomBackoffStrategies, ms } from '../utils'
 import { OrderInformation } from 'inves-broker'
+import deltaNeutralExitStrat from '../exit-strategies/deltaNeutralExit'
 
 function processJob (jobData: {
   initialJobData: SUPPORTED_TRADE_CONFIG
@@ -47,6 +49,14 @@ function processJob (jobData: {
         ...jobResponse
       } as DOS_TRAILING_INTERFACE)
     }
+
+    case EXIT_STRATEGIES.DELTA_DIFFERENCE: {
+      return deltaNeutralExitStrat({
+        initialJobData: initialJobData as DELTA_NEUTRAL_TRADE,
+        ...jobResponse
+      })
+    }
+
     // case EXIT_STRATEGIES.OBS_TRAIL_SL: {
     //   return fyersTrailObsSL({
     //     initialJobData,

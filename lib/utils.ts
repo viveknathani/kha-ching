@@ -35,6 +35,8 @@ const MOCK_ORDERS = process.env.MOCK_ORDERS
   : false
 export const SIGNALX_URL =
   process.env.SIGNALX_URL ?? 'https://indicator.signalx.trade'
+export const SIGNALX_BACKEND_URI =
+  process.env.SIGNALX_BACKEND_URI ?? 'https://backend.signalx.trade'
 const DATABASE_HOST_URL = process.env.DATABASE_HOST_URL
 const DATABASE_USER_KEY = process.env.DATABASE_USER_KEY
 const DATABASE_API_KEY = process.env.DATABASE_API_KEY
@@ -115,21 +117,24 @@ export interface StrikeInterface {
   CE_STRING: string
 }
 
-const getSortedMatchingIntrumentsData = async ({
+export const getSortedMatchingIntrumentsData = async ({
   nfoSymbol,
   strike,
   instrumentType,
-  tradingsymbol
+  tradingsymbol,
+  instrumentToken
 }: {
   nfoSymbol?: string
   strike?: number
   instrumentType?: string
-  tradingsymbol?: string
+  tradingsymbol?: string,
+  instrumentToken?: string,
 }): Promise<KITE_INSTRUMENT_INFO[]> => {
   const instrumentsData = await getIndexInstruments()
   const rows: KITE_INSTRUMENT_INFO[] = instrumentsData
     .filter(
       item =>
+        (instrumentToken ? item.instrument_token == instrumentToken : true) && // eslint-disable-line
         (nfoSymbol ? item.name === nfoSymbol : true) &&
         (strike ? item.strike == strike : true) && // eslint-disable-line
         (tradingsymbol ? item.tradingsymbol === tradingsymbol : true) &&
@@ -890,25 +895,25 @@ export function withoutFwdSlash (url: string): string {
   return url
 }
 
-export async function premiumAuthCheck (): Promise<any> {
-  if (!process.env.SIGNALX_API_KEY) {
-    return false
-  }
+// export async function premiumAuthCheck (): Promise<any> {
+//   if (!process.env.SIGNALX_API_KEY) {
+//     return false
+//   }
 
-  return axios.post(
-    `${SIGNALX_URL}/api/auth`,
-    {},
-    {
-      headers: {
-        'X-API-KEY': process.env.SIGNALX_API_KEY
-      }
-    }
-  )
-}
+//   return axios.post(
+//     `${SIGNALX_URL}/api/auth`,
+//     {},
+//     {
+//       headers: {
+//         'X-API-KEY': process.env.SIGNALX_API_KEY
+//       }
+//     }
+//   )
+// }
 
 export const SIGNALX_AXIOS_DB_AUTH = {
   headers: {
-    'x-api-key': DATABASE_API_KEY
+    'x-api-key': DATABASE_API_KEY!
   }
 }
 
@@ -960,7 +965,7 @@ export const withRemoteRetry = async (
           }
 
           console.log('withRemoteRetry attempt failed', e)
-          await Promise.delay(ms(2))
+          await Promise.delay(ms(5))
           return fn()
         }
       }
@@ -1395,17 +1400,21 @@ export const getHedgeForStrike = async ({
 }
 
 export interface apiResponseObject {
-  PutDelta: number
-  CallDelta: number
-  StrikePrice: number
+  "name": string,
+  "expiry": string,
+  "optionType": string,
+  "strikePrice": number,
+  "delta": number,
+  "gamma": number,
+  "theta": number,
+  "vega": number,
+  "impliedVolatility": number,
+  "tradeVolume": number
 }
 
 export const getStrikeByDelta = (
   delta: number,
-  apiResponse: {
-    atmStrike: number
-    data: apiResponseObject[]
-  },
+  optionChain: apiResponseObject[],
   type?: 'PE' | 'CE'
 ):
   | apiResponseObject
@@ -1413,9 +1422,13 @@ export const getStrikeByDelta = (
       putStrike: apiResponseObject
       callStrike: apiResponseObject
     } => {
-  const { data } = apiResponse
-  const putStrike = closest(delta, data, 'PutDelta', false)
-  const callStrike = closest(delta, data, 'CallDelta', false)
+  const putStrike = closest(
+    delta, 
+    optionChain
+      .filter(item => item.optionType === 'PE')
+      .map(item => ({...item, delta: Math.abs(item.delta)})), 
+    'delta', false)
+  const callStrike = closest(delta, optionChain.filter(item => item.optionType === 'CE'), 'delta', false)
   if (type === 'PE') {
     return putStrike
   }
@@ -1434,3 +1447,20 @@ export function round (value: number, step = 0.5): number {
   const inv = 1.0 / step
   return Math.round(value * inv) / inv
 }
+
+export async function getOptionChain({ instrument, expiry }) {
+  const { data: optionChain } = (await axios.post(
+    `${SIGNALX_BACKEND_URI}/api/v1/greeks`,
+    {
+      instrument,
+      expiry
+    }
+  ) as {
+    data: apiResponseObject[]
+  })
+
+  // console.log(optionChain)
+
+  return optionChain;
+}
+
