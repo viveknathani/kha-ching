@@ -22,7 +22,7 @@
 import { BrokerName } from 'inves-broker'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import console from '../logging'
 import { addToNextQueue, WATCHER_Q_NAME } from '../queue'
 import {

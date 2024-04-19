@@ -11,7 +11,7 @@ import {
 } from '../../lib/utils'
 import { KiteProfile } from '../../types/kite'
 import { SignalXUser } from '../../types/misc'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import { BrokerName } from 'inves-broker'
 
 export default withSession(async (req, res) => {

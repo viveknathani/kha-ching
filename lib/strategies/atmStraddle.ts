@@ -33,7 +33,7 @@ import {
   withRemoteRetry
 } from '../utils'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 
 dayjs.extend(isSameOrBefore)

@@ -50,9 +50,7 @@ const CommonDetailsRows = ({
   const lastHeartbeatAtString = !lastHeartbeatAt
     ? '-'
     : dayjs(lastHeartbeatAt).format('hh:mma')
-  const lastDeltaDiffString = !liveDeltaDiff
-    ? '-'
-    : liveDeltaDiff;
+  const lastDeltaDiffString = !liveDeltaDiff ? '-' : liveDeltaDiff
   const lastDetaDiffSetAtString = !lastDetaDiffSetAt
     ? '-'
     : dayjs(lastDetaDiffSetAt).format('hh:mma')
@@ -88,16 +86,15 @@ const CommonDetailsRows = ({
     exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
       ? [{ value: 'Last Delta Diff' }, { value: lastDeltaDiffString }]
       : null,
-      exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
+    exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
       ? [{ value: 'Last Delta Diff Time' }, { value: lastDetaDiffSetAtString }]
       : null,
     exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
       ? [{ value: 'Last Heartbeat' }, { value: lastHeartbeatAtString }]
       : null,
     exitStrategy === EXIT_STRATEGIES.DELTA_DIFFERENCE
-    ? [{ value: 'Automation status' }, { value: algoStatus }]
-    : null,
-
+      ? [{ value: 'Automation status' }, { value: algoStatus }]
+      : null
   ].filter(o => o)
 }
 

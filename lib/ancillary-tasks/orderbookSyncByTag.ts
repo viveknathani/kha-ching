@@ -6,7 +6,7 @@ import {
   syncGetKiteInstance,
   withRemoteRetry
 } from '../utils'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { BrokerName } from 'inves-broker'
 
 const DATABASE_HOST_URL: string = process.env.DATABASE_HOST_URL!

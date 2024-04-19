@@ -3,7 +3,7 @@ import { KiteConnect } from 'kiteconnect'
 
 import withSession from '../../lib/session'
 import { useKiteTicker } from '../../lib/socket/ticker'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import { BrokerName } from 'inves-broker'
 import { EXCHANGE, ORDER_STATUS } from '../../lib/constants'
 const apiKey = process.env.KITE_API_KEY

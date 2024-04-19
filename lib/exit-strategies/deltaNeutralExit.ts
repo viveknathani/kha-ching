@@ -2,7 +2,11 @@ import dayjs from 'dayjs'
 import { Await } from '../../types'
 import { KiteOrder } from '../../types/kite'
 import { COMBINED_SL_EXIT_STRATEGY } from '../../types/plans'
-import { ATM_STRADDLE_TRADE, ATM_STRANGLE_TRADE, DELTA_NEUTRAL_TRADE } from '../../types/trade'
+import {
+  ATM_STRADDLE_TRADE,
+  ATM_STRANGLE_TRADE,
+  DELTA_NEUTRAL_TRADE
+} from '../../types/trade'
 import { EXIT_STRATEGIES, USER_OVERRIDE } from '../constants'
 import console from '../logging'
 import { addToNextQueue, EXIT_TRADING_Q_NAME, TRADING_Q_NAME } from '../queue'
@@ -56,12 +60,7 @@ async function deltaNeutralExitStrat ({
       )
     }
 
-    const {
-      user,
-      deltaStrikes,
-      instrument,
-      _id: dbId
-    } = initialJobData
+    const { user, deltaStrikes, instrument, _id: dbId } = initialJobData
     const kite = syncGetKiteInstance(user)
 
     try {
@@ -84,8 +83,10 @@ async function deltaNeutralExitStrat ({
     // if not, resolve this checker assuming the user has squared off the positions themselves
 
     const tradingSymbols = legsOrders.map(order => order.tradingsymbol)
-    const callOptionSymbol = tradingSymbols.find(item => item.indexOf('CE') >= 0);
-    const putOptionSymbol = tradingSymbols.find(item => item.indexOf('PE') >= 0);
+    const callOptionSymbol = tradingSymbols.find(
+      item => item.indexOf('CE') >= 0
+    )
+    const putOptionSymbol = tradingSymbols.find(item => item.indexOf('PE') >= 0)
 
     // fetch the option chain here
     // get delta of tradingSymbols and difference between them
@@ -95,18 +96,31 @@ async function deltaNeutralExitStrat ({
     // get expiry of traded instrument
     // either I can do that from kite instrument table (which should be quick loookup from CSV json)
     // or pass it on from fn to fn
-    const expiryInKiteFormat = await getSortedMatchingIntrumentsData({ nfoSymbol:instrument, tradingsymbol: tradingSymbols[0] })
-    const expiryDate = expiryInKiteFormat[0].expiry;
-    const expiryInAngelOneFormat = dayjs(expiryDate).format('DDMMMYYYY').toUpperCase()
+    const expiryInKiteFormat = await getSortedMatchingIntrumentsData({
+      nfoSymbol: instrument,
+      tradingsymbol: tradingSymbols[0]
+    })
+    const expiryDate = expiryInKiteFormat[0].expiry
+    const expiryInAngelOneFormat = dayjs(expiryDate)
+      .format('DDMMMYYYY')
+      .toUpperCase()
 
-    const optionChain = await withRemoteRetry(async () => getOptionChain({ instrument, expiry: expiryInAngelOneFormat }))
-    const chainCallOption = optionChain.find(chainItem =>
-      chainItem.optionType === 'CE' && callOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
+    const optionChain = await withRemoteRetry(async () =>
+      getOptionChain({ instrument, expiry: expiryInAngelOneFormat })
+    )
+    const chainCallOption = optionChain.find(
+      chainItem =>
+        chainItem.optionType === 'CE' &&
+        callOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
-    const chainPutOption = optionChain.find(chainItem =>
-      chainItem.optionType === 'PE' && putOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
+    const chainPutOption = optionChain.find(
+      chainItem =>
+        chainItem.optionType === 'PE' &&
+        putOptionSymbol!.indexOf(`${chainItem.strikePrice}`)! >= 0
     )!
-    const deltaDiff = Math.abs(chainCallOption.delta - Math.abs(chainPutOption.delta))
+    const deltaDiff = Math.abs(
+      chainCallOption.delta - Math.abs(chainPutOption.delta)
+    )
     if (deltaDiff < deltaStrikes!) {
       const rejectMsg = `🟢 [deltaNeutralExitStrat] deltaDiff (${deltaDiff}) < threshold (${deltaStrikes!})`
       // update db trade with new delta diff
@@ -140,14 +154,16 @@ async function deltaNeutralExitStrat ({
       return `🟢 [delta neutral] Terminating Delta neutral trade; less than 40 mins in market closing.`
     }
 
-    return await addToNextQueue({
-      ...initialJobData,
-      runNow: false,
-      runAt: getNextNthMinute(ms(5 * 60))
-    }, {
-      _nextTradingQueue: TRADING_Q_NAME
-    })
-
+    return await addToNextQueue(
+      {
+        ...initialJobData,
+        runNow: false,
+        runAt: getNextNthMinute(ms(5 * 60))
+      },
+      {
+        _nextTradingQueue: TRADING_Q_NAME
+      }
+    )
   } catch (e) {
     console.log('☢️ [deltaNeutralExitStrat] errored', e)
     console.log('...adding to queue again...')

@@ -15,7 +15,7 @@ import {
   TRANSACTION_TYPE,
   USER_OVERRIDE
 } from '../constants'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import console from '../logging'
 import {
   // logDeep,

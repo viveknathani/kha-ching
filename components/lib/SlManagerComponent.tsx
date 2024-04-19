@@ -52,11 +52,13 @@ const SlManagerComponent = ({ state, onChange, exitStrategies }) => {
             fullWidth
             name='slmPercent'
             value={state.slmPercent}
-            onChange={e => onChange({ slmPercent: +e.target.value || undefined })}
+            onChange={e =>
+              onChange({ slmPercent: +e.target.value || undefined })
+            }
             label='SL %'
           />
-        </Grid>      
-      ): null}
+        </Grid>
+      ) : null}
       {state.exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD ? (
         <>
           <Grid item xs={12}>
@@ -122,16 +124,17 @@ const SlManagerComponent = ({ state, onChange, exitStrategies }) => {
               fullWidth
               name='slmPercent'
               value={state.slmPercent}
-              onChange={e => onChange({ slmPercent: +e.target.value || undefined })}
+              onChange={e =>
+                onChange({ slmPercent: +e.target.value || undefined })
+              }
               label='Initial SL %'
             />
           </Grid>
         </>
       ) : null}
 
-
-      {state.exitStrategy !== EXIT_STRATEGIES.DELTA_DIFFERENCE &&
-      state.exitStrategy !== EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD ||
+      {(state.exitStrategy !== EXIT_STRATEGIES.DELTA_DIFFERENCE &&
+        state.exitStrategy !== EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD) ||
       (state.exitStrategy === EXIT_STRATEGIES.MULTI_LEG_PREMIUM_THRESHOLD &&
         state.combinedExitStrategy ===
           COMBINED_SL_EXIT_STRATEGY.EXIT_LOSING) ? (

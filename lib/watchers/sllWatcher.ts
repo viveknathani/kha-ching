@@ -18,7 +18,7 @@ import {
   syncGetKiteInstance,
   withRemoteRetry
 } from '../utils'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { BrokerName } from 'inves-broker'
 import { ORDER_STATUS } from '../constants'
 

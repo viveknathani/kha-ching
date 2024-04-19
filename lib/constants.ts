@@ -264,7 +264,7 @@ export const STRATEGIES_DETAILS = {
       label:
         'when trend reverses from live trend and then every time trend reverses'
     }
-  },
+  }
   // [STRATEGIES.OPTION_BUYING_STRATEGY]: {
   //   premium: true,
   //   heading: 'Option Buying Strategy',
@@ -552,4 +552,8 @@ export enum ORDER_STATUS {
   TRIGGER_PENDING = 'TRIGGER PENDING',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED'
+}
+
+export enum REDIS_KEYS {
+  DHAN_SECURITY_LIST = 'KICKS:SECURITY:DHAN'
 }

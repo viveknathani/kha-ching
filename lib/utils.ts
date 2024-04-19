@@ -27,7 +27,7 @@ dayjs.extend(isSameOrBefore)
 import https from 'https'
 import fs from 'fs'
 import memoizer from 'memoizee'
-import getInvesBrokerInstance from './invesBroker'
+import { getInvesBrokerInstance } from './invesBroker'
 import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 
 const MOCK_ORDERS = process.env.MOCK_ORDERS
@@ -127,8 +127,8 @@ export const getSortedMatchingIntrumentsData = async ({
   nfoSymbol?: string
   strike?: number
   instrumentType?: string
-  tradingsymbol?: string,
-  instrumentToken?: string,
+  tradingsymbol?: string
+  instrumentToken?: string
 }): Promise<KITE_INSTRUMENT_INFO[]> => {
   const instrumentsData = await getIndexInstruments()
   const rows: KITE_INSTRUMENT_INFO[] = instrumentsData
@@ -136,7 +136,7 @@ export const getSortedMatchingIntrumentsData = async ({
       item =>
         (instrumentToken ? item.instrument_token == instrumentToken : true) && // eslint-disable-line
         (nfoSymbol ? item.name === nfoSymbol : true) &&
-        (strike ? item.strike == strike : true) && // eslint-disable-line
+        (strike ? item.strike == String(strike) : true) && // eslint-disable-line
         (tradingsymbol ? item.tradingsymbol === tradingsymbol : true) &&
         (instrumentType ? item.instrument_type === instrumentType : true)
     )
@@ -693,9 +693,12 @@ export const ensureMarginForBasketOrder = async (user, orders) => {
 
   console.log('[ensureMarginForBasketOrder]', { net })
 
-  const data = await invesBrokerInstance.checkMargin(orders, user?.session?.accessToken);
+  const data = await invesBrokerInstance.checkMargin(
+    orders,
+    user?.session?.accessToken
+  )
 
-  const totalMarginRequired = data.marginRequired;
+  const totalMarginRequired = data.marginRequired
 
   console.log('[ensureMarginForBasketOrder]', { totalMarginRequired })
 
@@ -794,7 +797,7 @@ export const getMultipleInstrumentPrices = async (
         .join('&')}`,
       {
         headers: {
-          'X-Kite-Version': "3",
+          'X-Kite-Version': '3',
           Authorization: `token ${KITE_API_KEY as string}:${user.session
             .accessToken as string}`
         }
@@ -1400,16 +1403,16 @@ export const getHedgeForStrike = async ({
 }
 
 export interface apiResponseObject {
-  "name": string,
-  "expiry": string,
-  "optionType": string,
-  "strikePrice": number,
-  "delta": number,
-  "gamma": number,
-  "theta": number,
-  "vega": number,
-  "impliedVolatility": number,
-  "tradeVolume": number
+  name: string
+  expiry: string
+  optionType: string
+  strikePrice: number
+  delta: number
+  gamma: number
+  theta: number
+  vega: number
+  impliedVolatility: number
+  tradeVolume: number
 }
 
 export const getStrikeByDelta = (
@@ -1423,12 +1426,19 @@ export const getStrikeByDelta = (
       callStrike: apiResponseObject
     } => {
   const putStrike = closest(
-    delta, 
+    delta,
     optionChain
       .filter(item => item.optionType === 'PE')
-      .map(item => ({...item, delta: Math.abs(item.delta)})), 
-    'delta', false)
-  const callStrike = closest(delta, optionChain.filter(item => item.optionType === 'CE'), 'delta', false)
+      .map(item => ({ ...item, delta: Math.abs(item.delta) })),
+    'delta',
+    false
+  )
+  const callStrike = closest(
+    delta,
+    optionChain.filter(item => item.optionType === 'CE'),
+    'delta',
+    false
+  )
   if (type === 'PE') {
     return putStrike
   }
@@ -1448,19 +1458,18 @@ export function round (value: number, step = 0.5): number {
   return Math.round(value * inv) / inv
 }
 
-export async function getOptionChain({ instrument, expiry }) {
+export async function getOptionChain ({ instrument, expiry }) {
   const { data: optionChain } = (await axios.post(
     `${SIGNALX_BACKEND_URI}/api/v1/greeks`,
     {
       instrument,
       expiry
     }
-  ) as {
+  )) as {
     data: apiResponseObject[]
-  })
+  }
 
   // console.log(optionChain)
 
-  return optionChain;
+  return optionChain
 }
-

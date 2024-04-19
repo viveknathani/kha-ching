@@ -9,7 +9,7 @@ import {
   syncGetKiteInstance
 } from '../../lib/utils'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import { BrokerName } from 'inves-broker'
 dayjs.extend(advancedFormat)
 

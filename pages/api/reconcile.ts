@@ -10,7 +10,7 @@ import {
 } from '../../lib/utils'
 import { SignalXUser } from '../../types/misc'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import { BrokerName } from 'inves-broker'
 
 const { DATABASE_HOST_URL, DATABASE_USER_KEY } = process.env

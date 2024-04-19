@@ -44,7 +44,7 @@ import {
 } from '../utils'
 
 import { doSquareOffPositions } from './autoSquareOff'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { BrokerName, OrderInformation } from 'inves-broker'
 
 const patchTradeWithTrailingSL = async ({ dbId, trailingSl }) =>

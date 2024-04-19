@@ -27,6 +27,7 @@ export const EXIT_TRADING_Q_NAME = `exitTradingQueue_${QID}`
 export const AUTO_SQUARE_OFF_Q_NAME = `autoSquareOffQueue_${QID}`
 export const WATCHER_Q_NAME = `watcherQueue_${QID}`
 export const ANCILLARY_Q_NAME = `ancillaryQueue_${QID}`
+export const SECURITY_LIST_Q_NAME = `securityListQueue`
 export const redisConnection = new IORedis(redisUrl)
 const queueOptions = {
   connection: redisConnection

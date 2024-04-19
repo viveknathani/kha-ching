@@ -18,7 +18,7 @@ import {
 } from '../utils'
 import { doSquareOffPositions } from './autoSquareOff'
 import { convertSlmToSll } from './individualLegExitOrders'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { BrokerName, OrderInformation } from 'inves-broker'
 import { ORDER_TYPE, TRANSACTION_TYPE } from '../constants'
 
@@ -85,12 +85,16 @@ async function minXPercentOrSupertrend ({
     // 1. whenever this gets called - check supertrend value and the current punched in SL value
     // update pending order if supertrend value is lower
 
-    const lastOpenDate = `${getLastOpenDateSince(dayjs()).format('YYYY-MM-DD')} 09:15`
+    const lastOpenDate = `${getLastOpenDateSince(dayjs()).format(
+      'YYYY-MM-DD'
+    )} 09:15`
     const nearestClosedCandleTime = getNearestCandleTime(5 * 60 * 1000).format(
       'YYYY-MM-DD HH:mm'
     )
 
-    const [filteredOptionData] = await getSortedMatchingIntrumentsData({ instrumentToken: optionInstrumentToken })
+    const [filteredOptionData] = await getSortedMatchingIntrumentsData({
+      instrumentToken: optionInstrumentToken
+    })
     const exchangeOptionToken = filteredOptionData.exchange_token
 
     const supertrendProps = {

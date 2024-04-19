@@ -1,5 +1,5 @@
 import { BrokerName } from 'inves-broker'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import withSession from '../../lib/session'
 import { syncGetKiteInstance } from '../../lib/utils'
 

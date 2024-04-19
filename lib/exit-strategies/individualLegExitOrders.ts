@@ -1,7 +1,7 @@
 import { Broker, BrokerName, OrderInformation } from 'inves-broker'
 import { SL_ORDER_TYPE } from '../../types/plans'
 import { SUPPORTED_TRADE_CONFIG } from '../../types/trade'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import console from '../logging'
 import { addToNextQueue, WATCHER_Q_NAME } from '../queue'
 import orderResponse from '../strategies/mockData/orderResponse'

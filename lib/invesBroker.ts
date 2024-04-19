@@ -1,6 +1,9 @@
 import * as invesBroker from 'inves-broker'
+import { redisConnection } from './queue'
+import { REDIS_KEYS } from './constants'
+import memoizee from 'memoizee'
 
-export default async function getInvesBrokerInstance (
+export async function getInvesBrokerInstance (
   brokerName: invesBroker.BrokerName
 ): Promise<invesBroker.Broker> {
   const iConnectParams = {
@@ -36,5 +39,41 @@ export default async function getInvesBrokerInstance (
       throw new Error('not supported broker')
     }
   }
-  return invesBroker.IConnect(iConnectParams.name, iConnectParams.config)
+  const broker = invesBroker.IConnect(iConnectParams.name, iConnectParams.config);
+  if (brokerName !== invesBroker.BrokerName.KITE) {
+    await broker.setSecurityList(await getSecurityList(brokerName));
+  }
+  return broker;
 }
+
+export async function fetchAndSetSecurityLists () {
+  const dhan = await getInvesBrokerInstance(invesBroker.BrokerName.DHAN)
+  const dhanList = await dhan.getSecurityList()
+  await redisConnection.get(
+    REDIS_KEYS.DHAN_SECURITY_LIST,
+    JSON.stringify(dhanList)
+  )
+}
+
+export const getSecurityList = memoizee(
+  async (brokerName: invesBroker.BrokerName): Promise<any> => {
+    let securityList: Record<string, any> = {}
+    switch (brokerName) {
+      case invesBroker.BrokerName.DHAN: {
+        const data = await redisConnection.get(REDIS_KEYS.DHAN_SECURITY_LIST)
+        if (data && data !== '') {
+          securityList = JSON.parse(data)
+        }
+        break
+      }
+      default: {
+        break
+      }
+    }
+
+    return securityList
+  },
+  {
+    promise: true
+  }
+)

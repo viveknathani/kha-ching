@@ -30,7 +30,7 @@ import { createOrder, getATMStraddle as getATMStrikes } from './atmStraddle'
 import { doSquareOffPositions } from '../exit-strategies/autoSquareOff'
 import dayjs, { Dayjs } from 'dayjs'
 import axios from 'axios'
-import getInvesBrokerInstance from '../invesBroker'
+import { getInvesBrokerInstance } from '../invesBroker'
 import { BrokerName } from 'inves-broker'
 
 export const getNearestContractDate = async (

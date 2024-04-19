@@ -2,7 +2,7 @@ import { KiteConnect } from 'kiteconnect'
 
 import withSession from '../../lib/session'
 import { SignalXUser } from '../../types/misc'
-import getInvesBrokerInstance from '../../lib/invesBroker'
+import { getInvesBrokerInstance } from '../../lib/invesBroker'
 import { BrokerName } from 'inves-broker'
 
 const apiKey = process.env.KITE_API_KEY
@@ -15,7 +15,7 @@ export default withSession(async (req, res) => {
   if (user) {
     const invesBrokerInstance = await getInvesBrokerInstance(BrokerName.KITE)
 
-    console.log("kc done");
+    console.log('kc done')
 
     try {
       // see if we're able to fetch profile with the access token
@@ -24,7 +24,7 @@ export default withSession(async (req, res) => {
         kiteAccessToken: user?.session?.accessToken
       })
 
-      console.log("profile fetch done");
+      console.log('profile fetch done')
 
       res.json({
         ...user,
