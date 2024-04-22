@@ -39,12 +39,19 @@ export async function getInvesBrokerInstance (
       throw new Error('not supported broker')
     }
   }
-  const broker = invesBroker.IConnect(iConnectParams.name, iConnectParams.config);
+  const broker = invesBroker.IConnect(
+    iConnectParams.name,
+    iConnectParams.config
+  )
   if (brokerName !== invesBroker.BrokerName.KITE) {
-    await broker.setSecurityList(await getSecurityList(brokerName));
+    await broker.setSecurityList(await getSecurityList(brokerName))
   }
-  return broker;
+  return broker
 }
+
+/**
+ * note: this whole thing can move inside the inves-broker library as well.
+ */
 
 export async function fetchAndSetSecurityLists () {
   const dhan = await getInvesBrokerInstance(invesBroker.BrokerName.DHAN)
@@ -77,3 +84,22 @@ export const getSecurityList = memoizee(
     promise: true
   }
 )
+
+export const validateUserAccess = async (
+  brokerName: invesBroker.BrokerName,
+  accessToken: string
+) => {
+  const invesBrokerInstance = await getInvesBrokerInstance(brokerName)
+  try {
+    // note: dhan does not have a get profile method which should ideally be used for this purpose
+    // hence we use getPositions - available across all brokers
+    await invesBrokerInstance.getPositions({
+      dhanAccessToken: accessToken,
+      kiteAccessToken: accessToken
+    })
+    return true
+  } catch (err) {
+    console.log(`validate broker access failed`, err)
+    return false
+  }
+}
